@@ -1,4 +1,4 @@
-import React from 'react';
+import React from "react";
 import {
   TouchableOpacity,
   Text,
@@ -7,11 +7,12 @@ import {
   ViewStyle,
   TextStyle,
   AccessibilityRole,
-} from 'react-native';
-import * as Haptics from 'expo-haptics';
+} from "react-native";
+import * as Haptics from "expo-haptics";
 
-export type ButtonVariant = 'primary' | 'secondary' | 'outline' | 'danger' | 'comfort';
-export type ButtonSize = 'medium' | 'large';
+export type ButtonVariant =
+  "primary" | "secondary" | "outline" | "danger" | "comfort";
+export type ButtonSize = "medium" | "large";
 
 interface GeriButtonProps {
   title: string;
@@ -30,8 +31,8 @@ interface GeriButtonProps {
 export const GeriButton: React.FC<GeriButtonProps> = ({
   title,
   onPress,
-  variant = 'primary',
-  size = 'large',
+  variant = "primary",
+  size = "large",
   disabled = false,
   loading = false,
   icon,
@@ -53,49 +54,50 @@ export const GeriButton: React.FC<GeriButtonProps> = ({
   const getVariantStyles = (): { button: string; text: string } => {
     if (disabled) {
       return {
-        button: 'bg-navy-200 border-navy-300',
-        text: 'text-navy-400',
+        button: "bg-navy-200 border-navy-300",
+        text: "text-navy-400",
       };
     }
     switch (variant) {
-      case 'secondary':
+      case "secondary":
         return {
-          button: 'bg-teal-100 border-teal-200 active:bg-teal-200',
-          text: 'text-teal-800',
+          button: "bg-teal-100 border-teal-200 active:bg-teal-200",
+          text: "text-teal-800",
         };
-      case 'outline':
+      case "outline":
         return {
-          button: 'bg-transparent border-navy-300 active:bg-navy-50',
-          text: 'text-navy-800',
+          button: "bg-transparent border-navy-300 active:bg-navy-50",
+          text: "text-navy-800",
         };
-      case 'danger':
+      case "danger":
         return {
-          button: 'bg-red-600 border-red-700 active:bg-red-700',
-          text: 'text-white',
+          button: "bg-red-600 border-red-700 active:bg-red-700",
+          text: "text-white",
         };
-      case 'comfort':
+      case "comfort":
         return {
-          button: 'bg-amber-600 border-amber-700 active:bg-amber-700',
-          text: 'text-white',
+          button: "bg-amber-600 border-amber-700 active:bg-amber-700",
+          text: "text-white",
         };
-      case 'primary':
+      case "primary":
       default:
         return {
-          button: 'bg-teal-600 border-teal-700 active:bg-teal-700',
-          text: 'text-white',
+          button: "bg-teal-600 border-teal-700 active:bg-teal-700",
+          text: "text-white",
         };
     }
   };
 
   const variantStyle = getVariantStyles();
-  const heightClass = size === 'large' ? 'min-h-[58px] py-4 px-6' : 'min-h-[48px] py-3 px-5';
+  const heightClass =
+    size === "large" ? "min-h-[58px] py-4 px-6" : "min-h-[48px] py-3 px-5";
 
   return (
     <TouchableOpacity
       onPress={handlePress}
       disabled={disabled || loading}
       accessible={true}
-      accessibilityRole={'button' as AccessibilityRole}
+      accessibilityRole={"button" as AccessibilityRole}
       accessibilityLabel={accessibilityLabel || title}
       accessibilityHint={accessibilityHint}
       accessibilityState={{ disabled: disabled || loading }}
@@ -106,7 +108,13 @@ export const GeriButton: React.FC<GeriButtonProps> = ({
       {loading ? (
         <ActivityIndicator
           size="small"
-          color={variant === 'primary' || variant === 'danger' || variant === 'comfort' ? '#FFFFFF' : '#2E7D7A'}
+          color={
+            variant === "primary" ||
+            variant === "danger" ||
+            variant === "comfort"
+              ? "#FFFFFF"
+              : "#2E7D7A"
+          }
         />
       ) : (
         <>

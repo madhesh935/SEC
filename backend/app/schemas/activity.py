@@ -1,11 +1,19 @@
 from __future__ import annotations
 
-from pydantic import BaseModel, Field
+from typing import Literal
+
+from pydantic import BaseModel
 
 
 class ActivityRecommendation(BaseModel):
     id: str
-    type: str
+    type: Literal[
+        "family_recognition",
+        "life_memory_recall",
+        "daily_routine_sequencing",
+        "photo_recognition",
+        "music_memory",
+    ]
     title: str
     description: str
     iconName: str | None = None
@@ -13,14 +21,10 @@ class ActivityRecommendation(BaseModel):
     completed: bool = False
 
 
-class ActivityResultRequest(BaseModel):
-    outcome: str = Field(description="e.g. completed, skipped, distressed")
-    notes: str | None = None
-
-
 class ComfortContentItem(BaseModel):
     id: str
-    type: str  # one of: music | voice | photo | audio | memory
+    resourceId: str
+    type: Literal["music", "voice", "photo", "audio", "memory"]
     title: str
     mediaUrl: str | None = None
     imageUrl: str | None = None

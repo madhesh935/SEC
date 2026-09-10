@@ -269,3 +269,14 @@ The frontend automatically transitions to:
 * Strict TypeScript: `npx tsc --noEmit` runs with 0 errors.
 * Offline Support: Disconnecting internet triggers `OfflineState` banner and disables online calls gracefully.
 * Accessibility: Minimum 48x48 touch targets, scalable text sizes, high-contrast dark navy on warm white, and full reduced-motion support.
+
+
+## Patient integration update
+
+See [the source-based endpoint audit and content map](docs/patient-endpoint-audit.md) and
+[the integration verification report](docs/patient-integration-verification.md) for current
+contracts, automated checks, and outstanding live acceptance requirements.
+
+Patient screens use backend data, SecureStore device pairing, server speech synthesis and
+consent-aware content. Build with `npm run build` (web), `npm run build:android`, or
+`npm run build:ios`; run native exports separately on Windows.

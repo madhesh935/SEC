@@ -1,20 +1,20 @@
-import React, { useState } from 'react';
-import { View, Text, TouchableOpacity } from 'react-native';
-import { SafeAreaView } from 'react-native-safe-area-context';
-import { useRouter } from 'expo-router';
-import { Delete, Lock, AlertCircle } from 'lucide-react-native';
-import * as Haptics from 'expo-haptics';
-import { GeriHeader } from '../../src/components/common/GeriHeader';
-import { pairingService } from '../../src/services/pairing.service';
-import { getOrCreateDeviceId } from '../../src/utils/deviceId';
-import { useSessionStore } from '../../src/store/session.store';
-import { ROUTES } from '../../src/constants/routes';
+import React, { useState } from "react";
+import { View, Text, TouchableOpacity } from "react-native";
+import { SafeAreaView } from "react-native-safe-area-context";
+import { useRouter } from "expo-router";
+import { Delete, Lock, AlertCircle } from "lucide-react-native";
+import * as Haptics from "expo-haptics";
+import { GeriHeader } from "../../src/components/common/GeriHeader";
+import { pairingService } from "../../src/services/pairing.service";
+import { getOrCreateDeviceId } from "../../src/utils/deviceId";
+import { useSessionStore } from "../../src/store/session.store";
+import { ROUTES } from "../../src/constants/routes";
 
 export default function PinVerificationScreen() {
   const router = useRouter();
   const setSession = useSessionStore((s) => s.setSession);
 
-  const [pin, setPin] = useState<string>('');
+  const [pin, setPin] = useState<string>("");
   const [loading, setLoading] = useState(false);
   const [errorMessage, setErrorMessage] = useState<string | null>(null);
 
@@ -47,7 +47,7 @@ export default function PinVerificationScreen() {
   };
 
   const handleClear = () => {
-    setPin('');
+    setPin("");
     setErrorMessage(null);
   };
 
@@ -73,12 +73,14 @@ export default function PinVerificationScreen() {
         });
         router.replace(ROUTES.ONBOARDING.COMPLETE as any);
       } else {
-        setErrorMessage('Incorrect PIN. Please try again.');
-        setPin('');
+        setErrorMessage("Incorrect PIN. Please try again.");
+        setPin("");
       }
     } catch {
-      setErrorMessage('Unable to connect right now. Please check your connection.');
-      setPin('');
+      setErrorMessage(
+        "Unable to connect right now. Please check your connection.",
+      );
+      setPin("");
     } finally {
       setLoading(false);
     }
@@ -114,8 +116,8 @@ export default function PinVerificationScreen() {
                   key={index}
                   className={`w-6 h-6 rounded-full mx-3 border-2 ${
                     isFilled
-                      ? 'bg-teal-600 border-teal-700'
-                      : 'bg-white border-navy-300'
+                      ? "bg-teal-600 border-teal-700"
+                      : "bg-white border-navy-300"
                   }`}
                 />
               );
@@ -135,7 +137,7 @@ export default function PinVerificationScreen() {
         {/* Accessible Large Numeric Keypad */}
         <View className="w-full max-w-xs mx-auto">
           <View className="flex-row justify-between mb-4">
-            {['1', '2', '3'].map((digit) => (
+            {["1", "2", "3"].map((digit) => (
               <TouchableOpacity
                 key={digit}
                 onPress={() => handleDigitPress(digit)}
@@ -151,7 +153,7 @@ export default function PinVerificationScreen() {
           </View>
 
           <View className="flex-row justify-between mb-4">
-            {['4', '5', '6'].map((digit) => (
+            {["4", "5", "6"].map((digit) => (
               <TouchableOpacity
                 key={digit}
                 onPress={() => handleDigitPress(digit)}
@@ -167,7 +169,7 @@ export default function PinVerificationScreen() {
           </View>
 
           <View className="flex-row justify-between mb-4">
-            {['7', '8', '9'].map((digit) => (
+            {["7", "8", "9"].map((digit) => (
               <TouchableOpacity
                 key={digit}
                 onPress={() => handleDigitPress(digit)}
@@ -195,7 +197,7 @@ export default function PinVerificationScreen() {
             </TouchableOpacity>
 
             <TouchableOpacity
-              onPress={() => handleDigitPress('0')}
+              onPress={() => handleDigitPress("0")}
               disabled={loading}
               accessible={true}
               accessibilityRole="button"

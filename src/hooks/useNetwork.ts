@@ -1,6 +1,6 @@
-import { useState, useEffect } from 'react';
-import NetInfo from '@react-native-community/netinfo';
-import { useCompanionStore } from '../store/companion.store';
+import { useState, useEffect } from "react";
+import NetInfo from "@react-native-community/netinfo";
+import { useCompanionStore } from "../store/companion.store";
 
 export function useNetwork() {
   const [isConnected, setIsConnected] = useState<boolean | null>(true);
@@ -8,13 +8,15 @@ export function useNetwork() {
 
   useEffect(() => {
     const unsubscribe = NetInfo.addEventListener((state) => {
-      const online = state.isConnected !== false && state.isInternetReachable !== false;
+      const online =
+        state.isConnected !== false && state.isInternetReachable !== false;
       setIsConnected(online);
       setIsOnline(online);
     });
 
     NetInfo.fetch().then((state) => {
-      const online = state.isConnected !== false && state.isInternetReachable !== false;
+      const online =
+        state.isConnected !== false && state.isInternetReachable !== false;
       setIsConnected(online);
       setIsOnline(online);
     });

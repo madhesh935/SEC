@@ -9,9 +9,12 @@ import datetime as dt
 from pydantic import BaseModel, Field
 
 from app.models.enums import MemoryCategory, MemorySensitivity
+from app.schemas.family import FamilyMemberPublic
 
 
 class MemoryCreateRequest(BaseModel):
+    displayDate: str | None = Field(default=None, max_length=80)
+    photoUrls: list[str] = Field(default_factory=list, max_length=20)
     title: str = Field(min_length=1, max_length=150)
     description: str = Field(min_length=1, max_length=2000)
     category: MemoryCategory | str = MemoryCategory.OTHER
@@ -31,6 +34,8 @@ class MemoryCreateRequest(BaseModel):
 
 
 class MemoryUpdateRequest(BaseModel):
+    displayDate: str | None = Field(default=None, max_length=80)
+    photoUrls: list[str] | None = Field(default=None, max_length=20)
     title: str | None = None
     description: str | None = None
     category: MemoryCategory | str | None = None
@@ -50,6 +55,8 @@ class MemoryUpdateRequest(BaseModel):
 
 
 class MemoryResponse(BaseModel):
+    displayDate: str | None = None
+    photoUrls: list[str] = Field(default_factory=list)
     id: str
     patientId: str
     title: str
@@ -77,6 +84,9 @@ class PatientMemoryPublic(BaseModel):
     approval, consent, or AI-internal flags."""
 
     id: str
+    category: str = "OTHER"
+    photoUrls: list[str] = Field(default_factory=list)
+    people: list[FamilyMemberPublic] = Field(default_factory=list)
     title: str
     description: str | None = None
     imageUrl: str | None = None

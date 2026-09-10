@@ -26,7 +26,9 @@ def test_response_too_long_for_stage_is_flagged():
 def test_restricted_memory_content_leak_is_flagged():
     policy = get_stage_policy(DementiaStage.EARLY)
     text = "Your secret surgery in 1998 went well, don't worry."
-    result = validate_response(text, policy, _strategy(), restricted_memory_snippets=["secret surgery in 1998"])
+    result = validate_response(
+        text, policy, _strategy(), restricted_memory_snippets=["secret surgery in 1998"]
+    )
     assert result.passed is False
     assert "restricted_memory_disclosed" in result.violations
 

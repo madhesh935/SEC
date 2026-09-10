@@ -1,6 +1,6 @@
 """Personal memory retrieval: structured fact lookup + semantic search.
 
-Per spec section 21, simple factual relationships ("who is Priya?") are
+Per spec section 21, simple factual relationships ("who is my daughter?") are
 answered from structured family records rather than vector search - semantic
 search complements structured retrieval for open-ended recall, it does not
 replace it. Vector search here is a local cosine-similarity implementation
@@ -52,7 +52,9 @@ def retrieve_relevant_memories(
     if not candidates:
         return []
 
-    ranked = top_k_by_similarity(query_embedding, candidates, k=top_k, min_similarity=min_similarity)
+    ranked = top_k_by_similarity(
+        query_embedding, candidates, k=top_k, min_similarity=min_similarity
+    )
     by_id = {m["id"]: m for m in ai_usable_memories}
 
     results: list[RetrievedMemory] = []

@@ -3,7 +3,11 @@ no internal safety/strategy/distress metadata is included (spec section 58)."""
 
 from __future__ import annotations
 
+from typing import Literal
+
 from pydantic import BaseModel, Field
+
+from app.schemas.patient_experience import PatientAction
 
 
 class TextConversationRequest(BaseModel):
@@ -13,12 +17,13 @@ class TextConversationRequest(BaseModel):
 
 
 class ConversationResponse(BaseModel):
+    actions: list[PatientAction] = Field(default_factory=list)
     conversationId: str
     transcript: str
     responseText: str
     responseAudioUrl: str | None = None
-    status: str
-    uiMode: str
+    status: Literal["success", "ai_disabled", "speech_not_understood", "tts_unavailable"]
+    uiMode: Literal["normal", "comfort", "caregiver_notified"]
 
 
 class HelpRequestPayload(BaseModel):

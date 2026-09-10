@@ -19,7 +19,7 @@ from app.schemas.conversation import (
     TextConversationRequest,
 )
 from app.services.conversation_service import ConversationService
-from app.utils.audio import validate_voice_upload
+from app.utils.audio import MAX_VOICE_UPLOAD_BYTES, validate_voice_upload
 
 router = APIRouter(prefix="/conversations", tags=["Conversation"])
 help_router = APIRouter(prefix="/patients", tags=["Conversation"])
@@ -51,12 +51,16 @@ async def voice_conversation(
     _ensure_own_patient(device, patientId)
     voice_upload_limiter.check(device.device_id)
 
-    audio_bytes = await audio.read()
+    audio_bytes = await audio.read(MAX_VOICE_UPLOAD_BYTES + 1)
     validate_voice_upload(audio.content_type, len(audio_bytes))
 
     service = ConversationService()
     result = await service.process_voice(
-        patientId, conversationId, audio_bytes, audio.filename or "audio.webm", audio.content_type or "audio/webm"
+        patientId,
+        conversationId,
+        audio_bytes,
+        audio.filename or "audio.webm",
+        audio.content_type or "audio/webm",
     )
     return ConversationResponse(**result.model_dump())
 

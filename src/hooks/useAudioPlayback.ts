@@ -1,78 +1,88 @@
-import { useState, useRef, useEffect, useCallback } from 'react';
-import { createAudioPlayer, AudioPlayer } from 'expo-audio';
-
+import { useState, useRef, useEffect, useCallback } from "react";
+import { useFocusEffect } from "expo-router";
+import { createAudioPlayer, AudioPlayer, setAudioModeAsync } from "expo-audio";
+import { useSettingsStore } from "../store/settings.store";
 export function useAudioPlayback() {
-  const [isPlaying, setIsPlaying] = useState(false);
-  const [currentUrl, setCurrentUrl] = useState<string | null>(null);
-  const [error, setError] = useState<string | null>(null);
-  const playerRef = useRef<AudioPlayer | null>(null);
-
-  useEffect(() => {
-    return () => {
-      if (playerRef.current) {
-        try {
-          playerRef.current.pause();
-        } catch {
-          // ignore
-        }
-      }
-    };
-  }, []);
-
-  const playAudio = useCallback((url: string) => {
-    try {
-      setError(null);
-      if (playerRef.current) {
-        playerRef.current.pause();
-      }
-
-      const player = createAudioPlayer(url);
-      playerRef.current = player;
-      setCurrentUrl(url);
-      setIsPlaying(true);
-      player.play();
-
-      player.addListener('playbackStatusUpdate', (status) => {
-        if (status.isLoaded && status.didJustFinish) {
-          setIsPlaying(false);
-          setCurrentUrl(null);
-        }
-      });
-    } catch {
-      setError('Unable to play audio.');
-      setIsPlaying(false);
-    }
-  }, []);
-
+  const [isPlaying, setPlaying] = useState(false),
+    [currentUrl, setUrl] = useState<string | null>(null),
+    [error, setError] = useState<string | null>(null);
+  const player = useRef<AudioPlayer | null>(null),
+    timer = useRef<ReturnType<typeof setTimeout> | null>(null);
+  const callbacks = useRef<{ done?: () => void; error?: () => void }>({});
+  const generation = useRef(0);
   const stopAudio = useCallback(() => {
-    if (playerRef.current) {
-      try {
-        playerRef.current.pause();
-      } catch {
-        // ignore
-      }
+    generation.current++;
+    if (timer.current) clearTimeout(timer.current);
+    if (player.current) {
+      player.current.pause();
+      player.current.remove();
+      player.current = null;
     }
-    setIsPlaying(false);
-    setCurrentUrl(null);
+    setPlaying(false);
+    setUrl(null);
   }, []);
-
-  const toggleAudio = useCallback(
-    (url: string) => {
-      if (isPlaying && currentUrl === url) {
+  useFocusEffect(useCallback(() => () => stopAudio(), [stopAudio]));
+  const playAudio = useCallback(
+    async (url: string, onDone?: () => void, onError?: () => void) => {
+      stopAudio();
+      setError(null);
+      callbacks.current = { done: onDone, error: onError };
+      const run = generation.current;
+      try {
+        await setAudioModeAsync({
+          playsInSilentMode: true,
+          allowsRecording: false,
+        });
+        if (run !== generation.current) return;
+        const current = createAudioPlayer(url);
+        player.current = current;
+        setUrl(url);
+        current.volume = useSettingsStore.getState().voiceVolume;
+        const fail = () => {
+          stopAudio();
+          setError("We couldn’t play this audio. Please try again.");
+          callbacks.current.error?.();
+        };
+        timer.current = setTimeout(fail, 20000);
+        current.addListener("playbackStatusUpdate", (status) => {
+          if (player.current !== current) return;
+          if (status.error) {
+            fail();
+            return;
+          }
+          if (status.playing) {
+            if (timer.current) clearTimeout(timer.current);
+            setPlaying(true);
+          }
+          if (status.didJustFinish) {
+            stopAudio();
+            callbacks.current.done?.();
+          }
+        });
+        current.play();
+      } catch {
+        if (run !== generation.current) return;
         stopAudio();
-      } else {
-        playAudio(url);
+        setError("We couldn’t play this audio. Please try again.");
+        onError?.();
       }
     },
-    [isPlaying, currentUrl, playAudio, stopAudio]
+    [stopAudio],
   );
-
-  return {
-    isPlaying,
-    currentUrl,
-    error,
-    playAudio,
-    stopAudio,
-    toggleAudio,
-  };
+  const toggleAudio = useCallback(
+    (url: string) => {
+      if (currentUrl === url) stopAudio();
+      else void playAudio(url);
+    },
+    [currentUrl, stopAudio, playAudio],
+  );
+  useEffect(
+    () => () => {
+      generation.current++;
+      if (timer.current) clearTimeout(timer.current);
+      player.current?.remove();
+    },
+    [],
+  );
+  return { isPlaying, currentUrl, error, playAudio, stopAudio, toggleAudio };
 }

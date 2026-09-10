@@ -9,7 +9,9 @@ from app.models.enums import DementiaStage, ResponseStrategy
 
 
 def _no_repetition() -> RepetitionResult:
-    return RepetitionResult(isRepeated=False, semanticTopic=None, similarity=0.0, recentCount=0, timeWindowMinutes=240)
+    return RepetitionResult(
+        isRepeated=False, semanticTopic=None, similarity=0.0, recentCount=0, timeWindowMinutes=240
+    )
 
 
 def test_repeated_question_never_produces_hostile_strategy():
@@ -17,7 +19,11 @@ def test_repeated_question_never_produces_hostile_strategy():
     emotion = analyze_emotion("Where is my daughter?")
     safety = assess_safety("Where is my daughter?")
     repetition = RepetitionResult(
-        isRepeated=True, semanticTopic="Where is my daughter?", similarity=0.9, recentCount=4, timeWindowMinutes=240
+        isRepeated=True,
+        semanticTopic="Where is my daughter?",
+        similarity=0.9,
+        recentCount=4,
+        timeWindowMinutes=240,
     )
     distress = score_distress(
         emotion.signal, True, 4, False, 20, False, safety.fearLevel, safety.emergencyDetected
@@ -41,8 +47,12 @@ def test_repeated_question_never_produces_hostile_strategy():
 def test_possible_hallucination_never_confirms_and_may_escalate():
     intent = extract_intent("Someone is hiding in my room and watching me, I'm scared.")
     emotion = analyze_emotion("Someone is hiding in my room and watching me, I'm scared.")
-    safety = assess_safety("Someone is hiding in my room and watching me, I'm scared.", emotion.matchedCues)
-    distress = score_distress(emotion.signal, False, 0, False, 0, False, safety.fearLevel, safety.emergencyDetected)
+    safety = assess_safety(
+        "Someone is hiding in my room and watching me, I'm scared.", emotion.matchedCues
+    )
+    distress = score_distress(
+        emotion.signal, False, 0, False, 0, False, safety.fearLevel, safety.emergencyDetected
+    )
 
     decision = decide_strategy(
         DementiaStage.MID,
@@ -65,7 +75,9 @@ def test_emergency_boundary_skips_normal_strategy_and_escalates():
     intent = extract_intent("I fell and I can't breathe.")
     emotion = analyze_emotion("I fell and I can't breathe.")
     safety = assess_safety("I fell and I can't breathe.")
-    distress = score_distress(emotion.signal, False, 0, False, 0, False, safety.fearLevel, safety.emergencyDetected)
+    distress = score_distress(
+        emotion.signal, False, 0, False, 0, False, safety.fearLevel, safety.emergencyDetected
+    )
 
     decision = decide_strategy(
         DementiaStage.EARLY,
@@ -87,14 +99,22 @@ def test_emergency_boundary_skips_normal_strategy_and_escalates():
 def test_high_distress_triggers_caregiver_escalation():
     intent = extract_intent("I don't know what's happening, I'm so scared and confused.")
     emotion = analyze_emotion("I don't know what's happening, I'm so scared and confused.")
-    safety = assess_safety("I don't know what's happening, I'm so scared and confused.", emotion.matchedCues)
+    safety = assess_safety(
+        "I don't know what's happening, I'm so scared and confused.", emotion.matchedCues
+    )
     distress = score_distress(emotion.signal, True, 5, True, 80, True, safety.fearLevel, False)
 
     decision = decide_strategy(
         DementiaStage.EARLY,
         get_stage_policy(DementiaStage.EARLY),
         intent,
-        RepetitionResult(isRepeated=True, semanticTopic="confusion", similarity=0.9, recentCount=5, timeWindowMinutes=240),
+        RepetitionResult(
+            isRepeated=True,
+            semanticTopic="confusion",
+            similarity=0.9,
+            recentCount=5,
+            timeWindowMinutes=240,
+        ),
         emotion,
         distress,
         safety,

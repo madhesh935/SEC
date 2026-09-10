@@ -29,6 +29,7 @@ class EmergencyContact(BaseModel):
 
 
 class PatientCreateRequest(BaseModel):
+    emergencyServicesPhone: str | None = Field(default=None, max_length=30)
     firstName: str = Field(min_length=1, max_length=100)
     preferredName: str | None = Field(default=None, max_length=100)
     age: int | None = Field(default=None, ge=1, le=130)
@@ -59,6 +60,7 @@ class PatientCreateRequest(BaseModel):
 
 
 class PatientUpdateRequest(BaseModel):
+    emergencyServicesPhone: str | None = Field(default=None, max_length=30)
     firstName: str | None = None
     preferredName: str | None = None
     age: int | None = Field(default=None, ge=1, le=130)
@@ -86,6 +88,8 @@ class PatientUpdateRequest(BaseModel):
 
 class PatientAdmin(BaseModel):
     """Caregiver / family facing patient record."""
+
+    emergencyServicesPhone: str | None = Field(default=None, max_length=30)
 
     id: str
     firstName: str
@@ -144,7 +148,7 @@ class PatientLiveStatusResponse(BaseModel):
     intent: str | None = None
     detectedEmotion: str | None = None
     repetitionCount: int = 0
-    distressScore: int = 0
+    distressScore: int | None = None
     retrievedMemory: str | None = None
     selectedStrategy: str | None = None
     aiResponse: str | None = None

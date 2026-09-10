@@ -1,19 +1,19 @@
 export interface HelpContacts {
-  caregiverName?: string;
-  caregiverPhone?: string;
-  caregiverAvailable?: boolean;
-  emergencyPhone?: string;
-  familyContactPhone?: string;
-  familyContactName?: string;
+  caregiverName?: string | null;
+  caregiverPhone?: string | null;
+  caregiverAvailable?: boolean | null;
+  emergencyPhone?: string | null;
+  familyContactPhone?: string | null;
+  familyContactName?: string | null;
 }
 
 export interface RequestHelpPayload {
   patientId: string;
-  reason?: string;
+  reason?: string | null;
 }
 
 export interface RequestHelpResponse {
   success: boolean;
-  message?: string;
-  timestamp?: string;
+  message?: string | null;
+  timestamp?: string | null;
 }

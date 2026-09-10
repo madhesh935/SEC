@@ -1,8 +1,10 @@
 # GeriCare AI - Backend
 
 Voice-first, stage-adaptive AI companion backend for dementia care. This service connects the
-React Native + Expo patient app and the Next.js caregiver/family website to Firebase, ElevenLabs
-speech services, an LLM, and a set of custom safety/strategy engines that sit *around* the LLM.
+React Native + Expo patient app and the Next.js caregiver/family website to Firebase, a local
+(free, no API key) Whisper speech-to-text model, an LLM, and a set of custom safety/strategy
+engines that sit *around* the LLM. Server speech synthesis uses Cloud Text-to-Speech;
+private Firebase Storage hosts the response audio returned to the patient app.
 
 ## The core principle
 
@@ -15,7 +17,7 @@ decides what's safe to say, how a patient should be addressed, or whether to esc
 ```mermaid
 flowchart TD
     A[Patient React Native App] --> B[FastAPI]
-    B --> C[ElevenLabs STT]
+    B --> C[Whisper STT]
     C --> D[Interaction Orchestrator]
     D --> E[Patient Context / Consent]
     D --> F[Memory Engine]
@@ -29,7 +31,7 @@ flowchart TD
     K --> L[Response Strategy Engine]
     L --> M[LLM]
     M --> N[Response Validator]
-    N --> O[ElevenLabs TTS]
+    N --> O[Server TTS and private Storage]
     O --> A
     D --> P[(Cloud Firestore)]
     P --> Q[Analytics]
@@ -45,7 +47,7 @@ flowchart TD
 Patient Speech -> STT -> Patient Identity -> Biographical Memory -> Recent Conversation Context
   -> Cognitive Stage -> Semantic Repetition -> Emotion -> Distress Risk -> Time/Behaviour Pattern
   -> Hallucination/Delusion Safety -> Response Strategy -> LLM -> Response Safety Validator
-  -> TTS -> Patient
+  -> Server TTS -> Private Storage audio URL -> Patient App playback
 ```
 
 Implemented end-to-end in [`app/ai/orchestrator.py`](app/ai/orchestrator.py); every engine it calls
@@ -69,7 +71,7 @@ backend/
 │   ├── models/enums.py          Shared enums
 │   └── utils/                   datetime, similarity, audio helpers
 ├── tests/
-│   ├── unit/                    Pure-function engine tests (no Firebase/LLM/ElevenLabs)
+│   ├── unit/                    Pure-function engine tests (no Firebase/LLM/Whisper)
 │   └── integration/             Orchestrator safety tests using in-memory fakes
 ├── scripts/initialize_firestore.py   Prints required indexes; can grant the first admin role
 ├── firestore.indexes.json       Composite indexes this backend requires
@@ -80,7 +82,7 @@ backend/
 ## Technology stack
 
 FastAPI, Uvicorn, Pydantic v2, pydantic-settings, Firebase Admin SDK (Firestore, Storage, FCM,
-Auth), httpx, ElevenLabs REST API (STT + TTS), an OpenRouter-compatible LLM API, Sentence
+Auth), httpx, faster-whisper (local STT, no API key), an OpenRouter-compatible LLM API, Sentence
 Transformers, NumPy, structlog, PyJWT, pytest.
 
 ## No mock data
@@ -158,19 +160,23 @@ The frontend can never assign its own role - `users/{uid}.role` in Firestore is 
 
 ---
 
-## ElevenLabs setup
+## Whisper setup
 
-Create an API key at elevenlabs.io, then set:
+Speech-to-text runs entirely on this machine via [faster-whisper](https://github.com/SYSTRAN/faster-whisper)
+- no API key, no per-request cost, and raw patient audio never leaves the server
+(`app/ai/speech/stt.py`). The model weights download automatically from Hugging Face on first use
+and are cached locally afterwards. Set the model size in `.env`:
 
 ```env
-ELEVENLABS_API_KEY=...
-ELEVENLABS_STT_MODEL=scribe_v1
-ELEVENLABS_TTS_MODEL=eleven_turbo_v2_5
-ELEVENLABS_VOICE_ID=<a calm, slower-paced voice id from your ElevenLabs voice library>
+WHISPER_MODEL=base
 ```
 
-The key is used **only** server-side (`app/ai/speech/stt.py`, `app/ai/speech/tts.py`) - neither
-frontend ever talks to ElevenLabs directly.
+`tiny` is fastest and lightest on memory; `base` (default) is a good accuracy/speed balance;
+`small`/`medium`/`large-v3` are progressively more accurate, slower, and heavier on RAM.
+Server TTS requires Cloud Text-to-Speech API access, a real Storage bucket, and credentials
+capable of signing private media URLs. If synthesis fails, the API returns the validated text
+with `status=tts_unavailable` and no audio URL; the app clearly reports unavailable speech.
+Run `python scripts/check_patient_runtime.py` to verify these capabilities without patient data.
 
 ## LLM configuration
 
@@ -210,7 +216,7 @@ Visit `http://localhost:8000/docs` for interactive OpenAPI docs.
 
 See [`.env.example`](.env.example). Mandatory in production (validated at startup, see
 `Settings.validate_production_secrets`): `FIREBASE_PROJECT_ID`, `FIREBASE_SERVICE_ACCOUNT_PATH`,
-`ELEVENLABS_API_KEY`, `LLM_API_KEY`, `JWT_SECRET`.
+`LLM_API_KEY`, `JWT_SECRET`.
 
 ---
 
@@ -253,7 +259,7 @@ Three distinct forms (spec-aligned), all consent-gated before ever reaching the 
   `calming_strategies`, used by the strategy engine and caregiver analytics.
 
 Semantic memory retrieval (`app/ai/memory_engine.py`) complements, but does not replace, structured
-fact lookup for simple relationships (e.g. "who is Priya?" is answered from the `family`
+fact lookup for simple relationships (a question about a known relative is answered from the `family`
 subcollection, not vector search).
 
 ## AI orchestration & safety architecture
@@ -272,7 +278,8 @@ each engine's contract. Key guarantees, enforced with tests in `tests/unit` and
 - The response validator (`app/ai/response_validator.py`) runs before TTS and blocks restricted
   memory disclosure, internal metadata leaks, unsupported medical claims, and confirmed unverified
   beliefs - regenerating once, then falling back to a generic, fact-free reassurance.
-- If the LLM is unavailable, the fallback response never invents personal facts.
+- LLM transport failures return an error. Validator rejection can produce a fact-free safety
+  reassurance after one regeneration attempt; it never invents personal facts.
 
 ## Consent architecture
 
@@ -311,7 +318,7 @@ Default Credentials for the attached service account automatically, so no key fi
 shipped, or baked into the image (this also sidesteps `iam.disableServiceAccountKeyCreation`
 entirely). Grant that runtime service account the `roles/datastore.user`,
 `roles/firebase.sdkAdminServiceAgent`, and `roles/storage.objectAdmin` IAM roles. Inject the
-remaining secrets (`ELEVENLABS_API_KEY`, `LLM_API_KEY`, `JWT_SECRET`) via Secret Manager. Render is
+remaining secrets (`LLM_API_KEY`, `JWT_SECRET`) via Secret Manager. Render is
 a viable alternative: set the same environment variables, use
 `uvicorn app.main:app --host 0.0.0.0 --port $PORT` as the start command, and use Option B (a
 service account key file mounted as a secret file) since Render has no equivalent of Cloud Run's

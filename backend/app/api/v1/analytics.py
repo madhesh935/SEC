@@ -19,19 +19,25 @@ router = APIRouter(prefix="/patients/{patient_id}/analytics", tags=["Analytics"]
 
 
 @router.get("/repetition", response_model=RepetitionAnalyticsResponse)
-async def repetition_analytics(patient: dict = Depends(authorize_patient_access)) -> RepetitionAnalyticsResponse:
+async def repetition_analytics(
+    patient: dict = Depends(authorize_patient_access),
+) -> RepetitionAnalyticsResponse:
     service = AnalyticsService()
     return RepetitionAnalyticsResponse(**service.repetition_analytics(patient["id"]))
 
 
 @router.get("/distress", response_model=DistressAnalyticsResponse)
-async def distress_analytics(patient: dict = Depends(authorize_patient_access)) -> DistressAnalyticsResponse:
+async def distress_analytics(
+    patient: dict = Depends(authorize_patient_access),
+) -> DistressAnalyticsResponse:
     service = AnalyticsService()
     return DistressAnalyticsResponse(**service.distress_analytics(patient["id"]))
 
 
 @router.get("/patterns", response_model=PatternAnalyticsResponse)
-async def pattern_analytics(patient: dict = Depends(authorize_patient_access)) -> PatternAnalyticsResponse:
+async def pattern_analytics(
+    patient: dict = Depends(authorize_patient_access),
+) -> PatternAnalyticsResponse:
     service = AnalyticsService()
     return PatternAnalyticsResponse(**service.pattern_analytics(patient["id"]))
 
@@ -54,6 +60,8 @@ async def distress_trend(
 
 
 @router.get("/frequent-topics", response_model=list[RepeatedTopicItem])
-async def frequent_topics(patient: dict = Depends(authorize_patient_access)) -> list[RepeatedTopicItem]:
+async def frequent_topics(
+    patient: dict = Depends(authorize_patient_access),
+) -> list[RepeatedTopicItem]:
     service = AnalyticsService()
     return [RepeatedTopicItem(**t) for t in service.frequently_repeated_topics(patient["id"])]

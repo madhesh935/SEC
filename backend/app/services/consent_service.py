@@ -38,7 +38,9 @@ class ConsentService:
 
     @classmethod
     def is_memory_allowed_for_redirection(cls, memory: dict, consent: dict) -> bool:
-        return cls.is_memory_allowed_for_ai(memory, consent) and bool(memory.get("useForRedirection"))
+        return cls.is_memory_allowed_for_ai(memory, consent) and bool(
+            memory.get("useForRedirection")
+        )
 
     @classmethod
     def may_mention_memory_directly(cls, memory: dict, consent: dict) -> bool:
@@ -76,7 +78,9 @@ class ConsentService:
         return {
             "patientId": patient_id,
             "personalDataCollection": bool(consent.get("personalDataCollection", True)),
-            "memoriesUsage": bool(consent.get("memoriesUsage", consent.get("aiMayUseMemoryInternally", True))),
+            "memoriesUsage": bool(
+                consent.get("memoriesUsage", consent.get("aiMayUseMemoryInternally", True))
+            ),
             "photosUsage": bool(consent.get("photosUsage", True)),
             "voiceRecordingsUsage": bool(consent.get("aiMayUseVoiceRecordings", False)),
             "aiConversationUsage": bool(consent.get("aiConversationEnabled", True)),

@@ -11,12 +11,22 @@ from app.ai.embeddings import EmbeddingEngine
 from app.ai.llm_service import LLMService
 from app.ai.orchestrator import InteractionOrchestrator
 from app.ai.speech.stt import SpeechToTextService
-from app.ai.speech.tts import TextToSpeechService
 from app.core.exceptions import AuthenticationError, PatientNotFoundError
 from app.core.permissions import require_caregiver_role, require_patient_access
-from app.core.security import AuthenticatedDevice, AuthenticatedUser, decode_patient_token, verify_firebase_id_token
-from app.database.repositories.activity_repository import ActivityRepository, CalmingStrategyRepository
-from app.database.repositories.alert_repository import AlertCollectionGroupRepository, AlertRepository
+from app.core.security import (
+    AuthenticatedDevice,
+    AuthenticatedUser,
+    decode_patient_token,
+    verify_firebase_id_token,
+)
+from app.database.repositories.activity_repository import (
+    ActivityRepository,
+    CalmingStrategyRepository,
+)
+from app.database.repositories.alert_repository import (
+    AlertCollectionGroupRepository,
+    AlertRepository,
+)
 from app.database.repositories.consent_repository import ConsentRepository
 from app.database.repositories.conversation_repository import (
     ConversationEventRepository,
@@ -60,14 +70,26 @@ async def get_current_user(authorization: str | None = Header(default=None)) -> 
     return AuthenticatedUser(uid=uid, email=email, role=role)
 
 
-async def get_current_caregiver(user: AuthenticatedUser = Depends(get_current_user)) -> AuthenticatedUser:
+async def get_current_caregiver(
+    user: AuthenticatedUser = Depends(get_current_user),
+) -> AuthenticatedUser:
     require_caregiver_role(user)
     return user
 
 
-async def get_current_device(authorization: str | None = Header(default=None)) -> AuthenticatedDevice:
+async def get_current_device(
+    authorization: str | None = Header(default=None),
+) -> AuthenticatedDevice:
     token = _extract_bearer_token(authorization)
-    return decode_patient_token(token, expected_type="access")
+    device = decode_patient_token(token, expected_type="access")
+    patient = get_patient_repository().get(device.patient_id)
+    if (
+        not patient
+        or patient.get("archived")
+        or not get_patient_device_repository().is_bound(device.patient_id, device.device_id)
+    ):
+        raise AuthenticationError("Device session is no longer valid.")
+    return device
 
 
 async def authorize_patient_access(
@@ -105,6 +127,8 @@ async def get_patient_access_context(
         device = None
 
     if device is not None:
+        if not get_patient_device_repository().is_bound(device.patient_id, device.device_id):
+            raise AuthenticationError("Device session is no longer valid.")
         if device.patient_id != patient_id:
             raise AuthenticationError("Device is not authorized for this patient.")
         patient = patient_repo.get(patient_id)
@@ -225,11 +249,6 @@ def get_llm_service() -> LLMService:
 @lru_cache
 def get_stt_service() -> SpeechToTextService:
     return SpeechToTextService()
-
-
-@lru_cache
-def get_tts_service() -> TextToSpeechService:
-    return TextToSpeechService()
 
 
 @lru_cache

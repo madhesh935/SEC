@@ -1,13 +1,5 @@
-export interface ComfortContent {
-  id: string;
-  type: 'music' | 'voice' | 'photo' | 'audio' | 'memory';
-  title: string;
-  mediaUrl?: string;
-  imageUrl?: string;
-  durationSeconds?: number;
-  description?: string;
-}
+import { z } from "zod";
+import { comfortSchema } from "../services/contracts";
+export type ComfortContent = z.infer<typeof comfortSchema>;
 
-export interface ComfortContentResponse {
-  items: ComfortContent[];
-}
+export type ComfortContentResponse = ComfortContent[];

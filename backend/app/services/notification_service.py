@@ -22,12 +22,13 @@ class NotificationService:
     def register_device_token(self, user_id: str, token: str) -> None:
         self.token_repository.register(user_id, token)
 
-    def notify_caregiver_of_alert(self, caregiver_uid: str, alert_id: str, patient_id: str) -> None:
+    def notify_caregiver_of_alert(self, caregiver_uid: str, alert_id: str, patient_id: str) -> str:
         tokens = self.token_repository.list_tokens(caregiver_uid)
         if not tokens:
             logger.info("no_fcm_tokens_for_caregiver", caregiver_uid=caregiver_uid)
-            return
+            return "not_configured"
 
+        delivered = False
         for token in tokens:
             message = messaging.Message(
                 notification=messaging.Notification(
@@ -39,5 +40,7 @@ class NotificationService:
             )
             try:
                 messaging.send(message)
+                delivered = True
             except Exception as exc:  # firebase_admin raises several FCM-specific errors
                 logger.warning("fcm_send_failed", error=str(exc))
+        return "delivered" if delivered else "failed"

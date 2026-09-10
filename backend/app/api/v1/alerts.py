@@ -39,7 +39,9 @@ def _to_alert_response(alert: dict) -> AlertResponse:
             "patientName": patient_name,
             "context": alert.get("contextSummary"),
             "createdAt": created_at.isoformat() if hasattr(created_at, "isoformat") else None,
-            "acknowledgedAt": acknowledged_at.isoformat() if hasattr(acknowledged_at, "isoformat") else None,
+            "acknowledgedAt": acknowledged_at.isoformat()
+            if hasattr(acknowledged_at, "isoformat")
+            else None,
             "resolvedAt": resolved_at.isoformat() if hasattr(resolved_at, "isoformat") else None,
         }
     )
@@ -71,7 +73,9 @@ def _find_alert(user: AuthenticatedUser, alert_id: str) -> tuple[str, dict]:
 
 
 @router.get("/{alert_id}", response_model=AlertResponse)
-async def get_alert(alert_id: str, user: AuthenticatedUser = Depends(get_current_user)) -> AlertResponse:
+async def get_alert(
+    alert_id: str, user: AuthenticatedUser = Depends(get_current_user)
+) -> AlertResponse:
     patient_id, alert = _find_alert(user, alert_id)
     return _to_alert_response({**alert, "patientId": patient_id})
 

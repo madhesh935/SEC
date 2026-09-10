@@ -110,7 +110,9 @@ def create_app() -> FastAPI:
     @app.exception_handler(Exception)
     async def unhandled_error_handler(request: Request, exc: Exception) -> JSONResponse:
         request_id = request_id_ctx.get()
-        logger.error("unhandled_error", path=request.url.path, request_id=request_id, error=str(exc))
+        logger.error(
+            "unhandled_error", path=request.url.path, request_id=request_id, error=str(exc)
+        )
         content = {
             "error": {
                 "code": "INTERNAL_ERROR",

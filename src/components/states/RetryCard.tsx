@@ -1,7 +1,7 @@
-import React from 'react';
-import { View, Text } from 'react-native';
-import { AlertCircle } from 'lucide-react-native';
-import { GeriButton } from '../common/GeriButton';
+import React from "react";
+import { View, Text } from "react-native";
+import { AlertCircle } from "lucide-react-native";
+import { GeriButton } from "../common/GeriButton";
 
 interface RetryCardProps {
   message?: string;
@@ -9,7 +9,7 @@ interface RetryCardProps {
 }
 
 export const RetryCard: React.FC<RetryCardProps> = ({
-  message = 'Unable to load content right now.',
+  message = "Unable to load content right now.",
   onRetry,
 }) => {
   return (

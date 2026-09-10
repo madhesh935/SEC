@@ -61,7 +61,9 @@ def score_distress(
     emotion_contribution = _EMOTION_WEIGHTS.get(emotion_signal, 0)
     factors["emotion"] = emotion_contribution
     if emotion_contribution:
-        explanation.append(f"Emotion signal '{emotion_signal.value}' contributed {emotion_contribution} points.")
+        explanation.append(
+            f"Emotion signal '{emotion_signal.value}' contributed {emotion_contribution} points."
+        )
 
     repetition_contribution = 0.0
     if is_repeated:
@@ -78,7 +80,9 @@ def score_distress(
     if help_contribution:
         explanation.append("Possible help-seeking statement detected.")
 
-    behaviour_contribution = min(recent_distress_average / 100 * _BEHAVIOUR_HISTORY_WEIGHT, _BEHAVIOUR_HISTORY_WEIGHT)
+    behaviour_contribution = min(
+        recent_distress_average / 100 * _BEHAVIOUR_HISTORY_WEIGHT, _BEHAVIOUR_HISTORY_WEIGHT
+    )
     factors["behaviour_history"] = round(behaviour_contribution, 2)
     if behaviour_contribution > 5:
         explanation.append("Recent distress history is elevated.")

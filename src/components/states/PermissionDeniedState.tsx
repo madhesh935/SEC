@@ -1,13 +1,15 @@
-import React from 'react';
-import { View, Text, Linking } from 'react-native';
-import { MicOff } from 'lucide-react-native';
-import { GeriButton } from '../common/GeriButton';
+import React from "react";
+import { View, Text, Linking } from "react-native";
+import { MicOff } from "lucide-react-native";
+import { GeriButton } from "../common/GeriButton";
 
 interface PermissionDeniedStateProps {
   onRetry?: () => void;
 }
 
-export const PermissionDeniedState: React.FC<PermissionDeniedStateProps> = ({ onRetry }) => {
+export const PermissionDeniedState: React.FC<PermissionDeniedStateProps> = ({
+  onRetry,
+}) => {
   const openSettings = () => {
     Linking.openSettings();
   };
@@ -25,7 +27,8 @@ export const PermissionDeniedState: React.FC<PermissionDeniedStateProps> = ({ on
         Microphone Access Needed
       </Text>
       <Text className="text-lg text-navy-600 text-center leading-relaxed max-w-sm mb-8">
-        GeriCare AI listens through your microphone so you can talk to your companion. Please allow microphone access in your device settings.
+        GeriCare AI listens through your microphone so you can talk to your
+        companion. Please allow microphone access in your device settings.
       </Text>
       <View className="w-full max-w-xs space-y-3">
         <GeriButton

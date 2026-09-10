@@ -45,6 +45,7 @@ def _authenticate_ws_user(token: str):
         raise AuthenticationError("No authorized role is assigned to this account yet.")
     return AuthenticatedUser(uid=uid, email=decoded.get("email"), role=role)
 
+
 _POLL_INTERVAL_SECONDS = 2.0
 _MAX_STREAM_SECONDS = 300
 
@@ -127,7 +128,9 @@ async def alerts_ws(websocket: WebSocket, token: str = Query(...)) -> None:
 
     # Baseline: don't flood a freshly connected client with alert history -
     # only stream alerts created after the socket opened.
-    seen_ids: set[str] = {a["id"] for a in alert_service.list_alerts(_authorized_patient_ids(), status=None)}
+    seen_ids: set[str] = {
+        a["id"] for a in alert_service.list_alerts(_authorized_patient_ids(), status=None)
+    }
 
     try:
         while True:

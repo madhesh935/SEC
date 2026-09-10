@@ -1,17 +1,25 @@
-import { apiClient } from './api';
-import { HelpContacts, RequestHelpResponse } from '../types/help';
+import { helpSchema, helpResultSchema } from "./contracts";
+import { apiClient } from "./api";
+import { HelpContacts, RequestHelpResponse } from "../types/help";
 
 export const helpService = {
   async getHelpContacts(patientId: string): Promise<HelpContacts> {
-    const response = await apiClient.get<HelpContacts>(`/api/v1/patients/${patientId}/help/contacts`);
-    return response.data;
+    const response = await apiClient.get<HelpContacts>(
+      `/api/v1/patients/${patientId}/help/contacts`,
+    );
+    return helpSchema.parse(response.data);
   },
 
-  async requestHelp(patientId: string, reason?: string): Promise<RequestHelpResponse> {
+  async requestHelp(
+    patientId: string,
+    reason?: string,
+  ): Promise<RequestHelpResponse> {
     const response = await apiClient.post<RequestHelpResponse>(
       `/api/v1/patients/${patientId}/help`,
-      { reason: reason || 'Patient requested assistance from device' }
+      { reason: reason || "Patient requested assistance from device" },
     );
-    return response.data;
+    const result = helpResultSchema.parse(response.data);
+    if (!result.success) throw new Error("Help was not sent");
+    return result;
   },
 };

@@ -27,7 +27,12 @@ async def upload_media(
     data = await file.read()
     service = MediaService()
     result = service.upload(
-        user.uid, type, file.filename or "upload", file.content_type or "", data, patient_id=patientId
+        user.uid,
+        type,
+        file.filename or "upload",
+        file.content_type or "",
+        data,
+        patient_id=patientId,
     )
     return MediaUploadResponse(**result)
 

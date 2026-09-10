@@ -1,7 +1,7 @@
-import React from 'react';
-import { View, Text } from 'react-native';
-import { AlertCircle } from 'lucide-react-native';
-import { GeriButton } from '../common/GeriButton';
+import React from "react";
+import { View, Text } from "react-native";
+import { AlertCircle } from "lucide-react-native";
+import { GeriButton } from "../common/GeriButton";
 
 interface ErrorStateProps {
   title?: string;
@@ -12,11 +12,11 @@ interface ErrorStateProps {
 }
 
 export const ErrorState: React.FC<ErrorStateProps> = ({
-  title = 'Unable to connect right now',
-  message = 'We are having trouble reaching our care service. Please try again in a moment.',
+  title = "Unable to connect right now",
+  message = "We are having trouble reaching our care service. Please try again in a moment.",
   onRetry,
   onGoBack,
-  retryTitle = 'Try Again',
+  retryTitle = "Try Again",
 }) => {
   return (
     <View
@@ -35,19 +35,11 @@ export const ErrorState: React.FC<ErrorStateProps> = ({
       </Text>
       <View className="w-full max-w-xs space-y-3">
         {onRetry && (
-          <GeriButton
-            title={retryTitle}
-            onPress={onRetry}
-            variant="primary"
-          />
+          <GeriButton title={retryTitle} onPress={onRetry} variant="primary" />
         )}
         {onGoBack && (
           <View className="mt-3">
-            <GeriButton
-              title="Go Back"
-              onPress={onGoBack}
-              variant="outline"
-            />
+            <GeriButton title="Go Back" onPress={onGoBack} variant="outline" />
           </View>
         )}
       </View>

@@ -77,6 +77,10 @@ export default function PatientProfilePage() {
 
   return (
     <div className="space-y-6 pb-12">
+      <div className="flex flex-wrap gap-3">
+        <Link href={`/dashboard/patients/${patientId}/edit`}><Button variant="outline">Edit Profile & Routine</Button></Link>
+        <Link href={`/dashboard/patients/${patientId}/memories`}><Button variant="outline">Manage Memories & Comfort</Button></Link>
+      </div>
       {/* Profile Header Card */}
       <div className="rounded-2xl border border-slate-200/80 bg-white p-6 shadow-soft">
         <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">

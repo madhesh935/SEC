@@ -138,11 +138,7 @@ def decide_strategy(
             escalation_reason = "Patient explicitly requested help."
 
     if stage == DementiaStage.LATE:
-        strategies = [
-            s
-            for s in strategies
-            if s not in (ResponseStrategy.MEMORY_PROMPT,)
-        ]
+        strategies = [s for s in strategies if s not in (ResponseStrategy.MEMORY_PROMPT,)]
         strategies.append(ResponseStrategy.COMFORT_MODE)
 
     distress_escalation_threshold = (
@@ -154,11 +150,15 @@ def decide_strategy(
         DistressSeverity.HIGH,
         DistressSeverity.URGENT,
     ]
-    if severity_order.index(distress.severity) >= severity_order.index(distress_escalation_threshold):
+    if severity_order.index(distress.severity) >= severity_order.index(
+        distress_escalation_threshold
+    ):
         if ResponseStrategy.CAREGIVER_ESCALATION not in strategies:
             strategies.append(ResponseStrategy.CAREGIVER_ESCALATION)
         escalate = True
-        escalation_reason = escalation_reason or f"Distress severity reached {distress.severity.value}."
+        escalation_reason = (
+            escalation_reason or f"Distress severity reached {distress.severity.value}."
+        )
 
     # De-duplicate while preserving order.
     seen = set()

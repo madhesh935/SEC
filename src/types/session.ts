@@ -3,7 +3,7 @@ export interface SessionData {
   refreshToken?: string;
   patientId: string;
   deviceId: string;
-  patientPreferredName?: string;
+  patientPreferredName?: string | null;
 }
 
 export interface SessionState {

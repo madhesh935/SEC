@@ -1,181 +1,167 @@
-import React from 'react';
-import { View, Text, ScrollView, TouchableOpacity } from 'react-native';
-import { useRouter } from 'expo-router';
-import { Heart, Image as ImageIcon, Music, LifeBuoy, Puzzle, Settings } from 'lucide-react-native';
-import { CompanionOrb } from '../../src/components/companion/CompanionOrb';
-import { GeriButton } from '../../src/components/common/GeriButton';
-import { LoadingState } from '../../src/components/common/LoadingState';
-import { ErrorState } from '../../src/components/states/ErrorState';
-import { OfflineState } from '../../src/components/states/OfflineState';
-import { usePatientProfile } from '../../src/hooks/usePatient';
-import { useCompanionStore } from '../../src/store/companion.store';
-import { useNetwork } from '../../src/hooks/useNetwork';
-import { getTimeOfDayGreeting } from '../../src/utils/formatters';
-import { ROUTES } from '../../src/constants/routes';
-
-export default function PatientHomeScreen() {
-  const router = useRouter();
-  const { isOffline } = useNetwork();
-  const { data: patient, isLoading, error, refetch } = usePatientProfile();
-  const { state: companionState, uiMode } = useCompanionStore();
-
-  const greeting = getTimeOfDayGreeting();
-
-  // If loading initial patient profile from backend
-  if (isLoading) {
-    return <LoadingState message="Welcome..." subMessage="Setting up your companion" />;
-  }
-
-  // If backend error loading patient profile
-  if (error && !patient) {
-    return (
-      <ErrorState
-        title="Unable to load profile"
-        message="We couldn't connect to your care profile. Please check your connection."
-        onRetry={() => refetch()}
-      />
-    );
-  }
-
-  const displayName = patient?.preferredName || patient?.firstName;
-
+import React, { useEffect, useState } from "react";
+import { View, Pressable } from "react-native";
+import { useRouter } from "expo-router";
+import {
+  Users,
+  Images,
+  Music,
+  Puzzle,
+  LifeBuoy,
+  Settings,
+  Mic,
+} from "lucide-react-native";
+import {
+  Screen,
+  Copy,
+  Action,
+  MenuCard,
+  QueryState,
+  Card,
+  palette,
+  useColumns,
+} from "../../src/components/patient/Design";
+import { CompanionOrb } from "../../src/components/companion/CompanionOrb";
+import {
+  usePatientProfile,
+  useRecommendation,
+} from "../../src/hooks/usePatient";
+import { ContextAction } from "../../src/components/patient/ContextAction";
+import { getTimeOfDayGreeting } from "../../src/utils/formatters";
+const shortcuts = [
+  {
+    route: "/family",
+    title: "Family",
+    description: "People who love you",
+    Icon: Users,
+    tone: "rose",
+  },
+  {
+    route: "/memories",
+    title: "Memories",
+    description: "Your special moments",
+    Icon: Images,
+    tone: "blue",
+  },
+  {
+    route: "/comfort",
+    title: "Comfort",
+    description: "Music & calming support",
+    Icon: Music,
+    tone: "mint",
+  },
+  {
+    route: "/activities",
+    title: "Games",
+    description: "Gentle mind activities",
+    Icon: Puzzle,
+    tone: "lavender",
+  },
+] as const;
+export default function Home() {
+  const router = useRouter(),
+    query = usePatientProfile(),
+    recommendation = useRecommendation(),
+    columns = useColumns();
+  const [greeting, setGreeting] = useState(getTimeOfDayGreeting());
+  useEffect(() => {
+    const timer = setInterval(() => setGreeting(getTimeOfDayGreeting()), 60000);
+    return () => clearInterval(timer);
+  }, []);
   return (
-    <ScrollView
-      contentContainerStyle={{ flexGrow: 1 }}
-      className="bg-background-warm px-6 pt-8 pb-6"
-    >
-      {/* Top Dynamic Device-Time Greeting */}
-      <View className="flex-row items-center justify-between mb-6">
-        <View className="flex-1">
-          <Text className="text-xl font-medium text-navy-500">
-            {greeting}
-          </Text>
-          {/* Only render name if returned by backend */}
-          {displayName ? (
-            <Text className="text-3xl font-bold text-navy tracking-tight mt-0.5">
-              {displayName}
-            </Text>
-          ) : (
-            <Text className="text-3xl font-bold text-navy tracking-tight mt-0.5">
-              Welcome back
-            </Text>
-          )}
-        </View>
-
-        <TouchableOpacity
-          onPress={() => router.push(ROUTES.PATIENT.SETTINGS as any)}
-          accessible={true}
-          accessibilityRole="button"
-          accessibilityLabel="Settings"
-          className="w-12 h-12 rounded-2xl bg-white border border-navy-200 items-center justify-center active:bg-navy-50"
+    <Screen>
+      <QueryState
+        loading={query.isPending}
+        error={query.error}
+        retry={() => void query.refetch()}
+      >
+        <View
+          style={{ flexDirection: "row", gap: 12, alignItems: "flex-start" }}
         >
-          <Settings size={22} color="#334155" />
-        </TouchableOpacity>
-      </View>
-
-      {/* Center Companion Section */}
-      <View className="items-center my-4">
-        <CompanionOrb state={companionState} uiMode={uiMode} size={200} />
-
-        <View className="w-full max-w-xs mt-6">
-          <GeriButton
-            title="Talk to me"
-            size="large"
-            variant={uiMode === 'comfort' ? 'comfort' : 'primary'}
-            onPress={() => router.push(ROUTES.PATIENT.COMPANION as any)}
-            accessibilityLabel="Talk to your companion"
-            accessibilityHint="Opens voice companion screen"
+          <View style={{ flex: 1 }}>
+            <Copy size={21} bold>
+              {greeting},
+            </Copy>
+            <Copy size={32} bold>
+              {query.data?.preferredName}
+            </Copy>
+            <Copy style={{ color: palette.muted }}>I’m here with you.</Copy>
+            <Copy size={17} style={{ color: palette.muted }}>
+              Let’s take today one step at a time.
+            </Copy>
+          </View>
+          <Pressable
+            accessibilityRole="button"
+            accessibilityLabel="Settings"
+            onPress={() => router.push("/settings")}
+            style={{
+              height: 48,
+              width: 48,
+              alignItems: "center",
+              justifyContent: "center",
+              backgroundColor: "white",
+              borderRadius: 24,
+            }}
+          >
+            <Settings color={palette.ink} size={23} />
+          </Pressable>
+        </View>
+        <View style={{ alignItems: "center" }}>
+          <CompanionOrb state="idle" size={195} />
+          <Action
+            label="Talk to Me"
+            icon={<Mic color="white" size={23} />}
+            onPress={() => router.push("/companion")}
+            style={{ width: "100%", maxWidth: 340 }}
           />
         </View>
-      </View>
-
-      {/* Quick Action Cards */}
-      <View className="mt-8 mb-4">
-        <Text className="text-lg font-bold text-navy-800 mb-4 px-1">
-          Quick Actions
-        </Text>
-
-        <View className="flex-row flex-wrap justify-between">
-          {/* Family */}
-          <TouchableOpacity
-            onPress={() => router.push(ROUTES.PATIENT.FAMILY as any)}
-            accessible={true}
-            accessibilityRole="button"
-            accessibilityLabel="Family connections"
-            className="w-[48%] bg-white border border-navy-100 rounded-3xl p-5 mb-4 shadow-xs active:bg-teal-50"
-          >
-            <View className="w-12 h-12 rounded-2xl bg-teal-50 items-center justify-center mb-3">
-              <Heart size={26} color="#2E7D7A" />
-            </View>
-            <Text className="text-lg font-bold text-navy">Family</Text>
-            <Text className="text-xs text-navy-500 mt-1">Photos & voices</Text>
-          </TouchableOpacity>
-
-          {/* Memories */}
-          <TouchableOpacity
-            onPress={() => router.push(ROUTES.PATIENT.MEMORIES as any)}
-            accessible={true}
-            accessibilityRole="button"
-            accessibilityLabel="View memories"
-            className="w-[48%] bg-white border border-navy-100 rounded-3xl p-5 mb-4 shadow-xs active:bg-softblue-50"
-          >
-            <View className="w-12 h-12 rounded-2xl bg-softblue-50 items-center justify-center mb-3">
-              <ImageIcon size={26} color="#4A90E2" />
-            </View>
-            <Text className="text-lg font-bold text-navy">Memories</Text>
-            <Text className="text-xs text-navy-500 mt-1">Stories & places</Text>
-          </TouchableOpacity>
-
-          {/* Comfort */}
-          <TouchableOpacity
-            onPress={() => router.push(ROUTES.PATIENT.COMFORT as any)}
-            accessible={true}
-            accessibilityRole="button"
-            accessibilityLabel="Comfort audio"
-            className="w-[48%] bg-white border border-navy-100 rounded-3xl p-5 mb-4 shadow-xs active:bg-lavender-50"
-          >
-            <View className="w-12 h-12 rounded-2xl bg-lavender-50 items-center justify-center mb-3">
-              <Music size={26} color="#7C3AED" />
-            </View>
-            <Text className="text-lg font-bold text-navy">Comfort</Text>
-            <Text className="text-xs text-navy-500 mt-1">Music & calm</Text>
-          </TouchableOpacity>
-
-          {/* Help */}
-          <TouchableOpacity
-            onPress={() => router.push(ROUTES.PATIENT.HELP as any)}
-            accessible={true}
-            accessibilityRole="button"
-            accessibilityLabel="Get help"
-            className="w-[48%] bg-white border border-navy-100 rounded-3xl p-5 mb-4 shadow-xs active:bg-red-50"
-          >
-            <View className="w-12 h-12 rounded-2xl bg-red-50 items-center justify-center mb-3">
-              <LifeBuoy size={26} color="#C62828" />
-            </View>
-            <Text className="text-lg font-bold text-navy">Help</Text>
-            <Text className="text-xs text-navy-500 mt-1">Caregiver support</Text>
-          </TouchableOpacity>
+        <View style={{ flexDirection: "row", flexWrap: "wrap", gap: 12 }}>
+          {shortcuts.map(({ route, title, description, Icon, tone }) => (
+            <Pressable
+              accessibilityRole="button"
+              accessibilityLabel={title}
+              key={route}
+              onPress={() => router.push(route)}
+              style={({ pressed }) => ({
+                width: columns === 1 ? "100%" : "48%",
+                flexGrow: 1,
+                padding: 18,
+                gap: 6,
+                borderRadius: 23,
+                backgroundColor: palette[tone],
+                borderWidth: 1,
+                borderColor: palette.line,
+                opacity: pressed ? 0.75 : 1,
+                alignItems: "center",
+              })}
+            >
+              <Icon color={palette.teal} size={30} />
+              <Copy size={20} bold>
+                {title}
+              </Copy>
+              <Copy
+                size={15}
+                style={{ textAlign: "center", color: palette.muted }}
+              >
+                {description}
+              </Copy>
+            </Pressable>
+          ))}
         </View>
-
-        {/* Secondary: Activities */}
-        <TouchableOpacity
-          onPress={() => router.push(ROUTES.PATIENT.ACTIVITIES as any)}
-          accessible={true}
-          accessibilityRole="button"
-          accessibilityLabel="Recall activities"
-          className="flex-row items-center justify-between bg-mint-50 border border-mint-200 rounded-2xl p-4 mt-1 active:bg-mint-100"
-        >
-          <View className="flex-row items-center flex-1">
-            <View className="w-10 h-10 rounded-xl bg-teal-100 items-center justify-center mr-3">
-              <Puzzle size={22} color="#2E7D7A" />
-            </View>
-            <View className="flex-1">
-              <Text className="text-base font-bold text-navy">Daily Activities</Text>
-              <Text className="text-xs text-navy-600">Gentle memory & routine exercises</Text>
-            </View>
-          </View>
-        </TouchableOpacity>
-      </View>
-    </ScrollView>
+        <MenuCard
+          title="Help"
+          description="Get support anytime"
+          icon={<LifeBuoy color={palette.teal} />}
+          onPress={() => router.push("/help")}
+        />
+        {recommendation.data && !recommendation.error && (
+          <Card tone="peach">
+            <Copy size={21} bold>
+              {recommendation.data.title}
+            </Copy>
+            <ContextAction action={recommendation.data.action} />
+          </Card>
+        )}
+      </QueryState>
+    </Screen>
   );
 }

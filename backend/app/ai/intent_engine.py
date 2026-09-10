@@ -41,8 +41,10 @@ _WHERE_IS_PATTERN = re.compile(r"where('?s| is)\s+(my\s+)?([A-Za-z]+)", re.IGNOR
 def extract_intent(text: str) -> IntentResult:
     lowered = text.lower().strip()
 
-    is_question = lowered.rstrip("?").endswith(_QUESTION_WORDS) or "?" in text or any(
-        lowered.startswith(w) for w in _QUESTION_WORDS
+    is_question = (
+        lowered.rstrip("?").endswith(_QUESTION_WORDS)
+        or "?" in text
+        or any(lowered.startswith(w) for w in _QUESTION_WORDS)
     )
     possible_help = any(re.search(p, lowered) for p in _HELP_PATTERNS)
     possible_confusion = any(re.search(p, lowered) for p in _CONFUSION_PATTERNS)

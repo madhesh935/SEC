@@ -11,7 +11,10 @@ from collections import Counter, defaultdict
 
 from app.ai.pattern_engine import compute_hourly_distribution, identify_high_risk_windows
 from app.database.repositories.conversation_repository import ConversationEventRepository
-from app.database.repositories.event_repository import DistressEventRepository, RepetitionEventRepository
+from app.database.repositories.event_repository import (
+    DistressEventRepository,
+    RepetitionEventRepository,
+)
 from app.database.repositories.patient_repository import PatientRepository
 from app.utils.datetime import days_ago
 
@@ -41,7 +44,9 @@ class AnalyticsService:
     ) -> None:
         self.repetition_repository = repetition_repository or RepetitionEventRepository()
         self.distress_repository = distress_repository or DistressEventRepository()
-        self.conversation_event_repository = conversation_event_repository or ConversationEventRepository()
+        self.conversation_event_repository = (
+            conversation_event_repository or ConversationEventRepository()
+        )
         self.patient_repository = patient_repository or PatientRepository()
 
     def repetition_analytics(self, patient_id: str, days: int = 14) -> dict:
@@ -84,7 +89,9 @@ class AnalyticsService:
             "averagePerTopic": round(len(events) / len(topic_counter), 2) if topic_counter else 0.0,
             "topics": topics,
             "trend": [{"time": k, "count": v} for k, v in sorted(daily_trend.items())],
-            "timeOfDayBreakdown": [{"hour": k, "count": v} for k, v in sorted(hourly_breakdown.items())],
+            "timeOfDayBreakdown": [
+                {"hour": k, "count": v} for k, v in sorted(hourly_breakdown.items())
+            ],
             "strategiesWithReducedDistress": sorted(strategies_seen),
         }
 
@@ -104,7 +111,9 @@ class AnalyticsService:
                 trend.append(
                     {
                         "timestamp": created_at.isoformat(),
-                        "timeLabel": created_at.strftime("%H:%M") if hasattr(created_at, "strftime") else "",
+                        "timeLabel": created_at.strftime("%H:%M")
+                        if hasattr(created_at, "strftime")
+                        else "",
                         "distressScore": score,
                     }
                 )
@@ -133,30 +142,45 @@ class AnalyticsService:
             for strategy in event.get("strategies", []):
                 strategy_counter[strategy] += 1
 
-        overall_avg = sum(e.get("distressScore", 0) for e in events) / len(events) if events else 0.0
+        overall_avg = (
+            sum(e.get("distressScore", 0) for e in events) / len(events) if events else 0.0
+        )
         strategies_used = []
         for strategy, count in strategy_counter.most_common():
             matching = [e for e in recent_conv_events if strategy in (e.get("strategies") or [])]
             avg_for_strategy = (
-                sum(e.get("distressScore", 0) for e in matching) / len(matching) if matching else None
+                sum(e.get("distressScore", 0) for e in matching) / len(matching)
+                if matching
+                else None
             )
             success_rate = None
             if avg_for_strategy is not None and overall_avg > 0:
-                success_rate = round(max(0.0, min(1.0, 1 - (avg_for_strategy / max(overall_avg, 1)))), 2)
-            strategies_used.append({"strategy": strategy, "count": count, "successRate": success_rate})
+                success_rate = round(
+                    max(0.0, min(1.0, 1 - (avg_for_strategy / max(overall_avg, 1)))), 2
+                )
+            strategies_used.append(
+                {"strategy": strategy, "count": count, "successRate": success_rate}
+            )
 
         latest = events[-1] if events else None
-        current_score = int(latest.get("distressScore", 0)) if latest else 0
-        current_severity = latest.get("severity", "LOW") if latest else "LOW"
-        risk_level_map = {"LOW": "LOW", "MODERATE": "MODERATE", "HIGH": "ELEVATED", "URGENT": "HIGH"}
+        current_score = int(latest["distressScore"]) if latest else None
+        current_severity = latest.get("severity") if latest else None
+        risk_level_map = {
+            "LOW": "LOW",
+            "MODERATE": "MODERATE",
+            "HIGH": "ELEVATED",
+            "URGENT": "HIGH",
+        }
 
         return {
             "currentDistressScore": current_score,
-            "riskLevel": risk_level_map.get(current_severity, "LOW"),
+            "riskLevel": risk_level_map.get(current_severity),
             "trend": trend,
             "emotionDistribution": emotion_distribution,
             "highDistressEvents": high_distress_events[:20],
-            "commonTriggers": [{"trigger": f, "frequency": c} for f, c in factor_counter.most_common(5)],
+            "commonTriggers": [
+                {"trigger": f, "frequency": c} for f, c in factor_counter.most_common(5)
+            ],
             "strategiesUsed": strategies_used,
         }
 
@@ -177,13 +201,13 @@ class AnalyticsService:
         high_risk_hours = {h for w in windows for h in range(w.hourRangeStart, w.hourRangeEnd)}
 
         hourly_patterns = []
-        for hour in range(24):
+        for hour in sorted(set(distress_by_hour) | set(repetition_by_hour)):
             point = distress_by_hour.get(hour)
             hourly_patterns.append(
                 {
                     "hour": hour,
                     "label": f"{hour:02d}:00",
-                    "distressScore": point.averageScore if point else 0.0,
+                    "distressScore": point.averageScore if point else None,
                     "repetitionCount": repetition_by_hour.get(hour, 0),
                     "isHighRiskWindow": hour in high_risk_hours,
                 }
@@ -203,9 +227,16 @@ class AnalyticsService:
         events = self.conversation_event_repository.list(
             patient_id, limit=500, order_by="createdAt", descending=True
         )
-        events = [e for e in events if _created_within(e, days_ago(days))]
+        events = [
+            e
+            for e in events
+            if _created_within(e, days_ago(days))
+            and isinstance(e.get("distressScore"), (int, float))
+        ]
 
-        overall_avg = sum(e.get("distressScore", 0) for e in events) / len(events) if events else 0.0
+        overall_avg = (
+            sum(e.get("distressScore", 0) for e in events) / len(events) if events else 0.0
+        )
 
         strategy_events: dict[str, list[dict]] = defaultdict(list)
         for event in events:
@@ -224,7 +255,10 @@ class AnalyticsService:
                     "observed distress than the overall average."
                 )
             else:
-                observed_change = f"Used in {count} observed interaction(s); not enough data for a comparison yet."
+                observed_change = (
+                    f"Used in {count} observed interaction(s); "
+                    "not enough data for a comparison yet."
+                )
 
             results.append(
                 {
@@ -249,7 +283,9 @@ class AnalyticsService:
                 trend.append(
                     {
                         "timestamp": created_at.isoformat(),
-                        "timeLabel": created_at.strftime("%H:%M") if hasattr(created_at, "strftime") else "",
+                        "timeLabel": created_at.strftime("%H:%M")
+                        if hasattr(created_at, "strftime")
+                        else "",
                         "distressScore": float(event.get("distressScore", 0)),
                     }
                 )

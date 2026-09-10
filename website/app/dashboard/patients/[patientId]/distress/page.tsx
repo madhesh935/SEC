@@ -101,14 +101,14 @@ export default function DistressAnalyticsPage() {
       <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
         <MetricCard
           label="Current Distress Score"
-          value={distressData?.currentDistressScore !== undefined ? `${distressData.currentDistressScore} / 100` : undefined}
+          value={distressData?.currentDistressScore != null ? `${distressData.currentDistressScore} / 100` : undefined}
           icon={HeartPulse}
           variant="amber"
           description="Interaction tension metric"
         />
         <MetricCard
           label="Estimated Distress Risk"
-          value={distressData?.riskLevel}
+          value={distressData?.riskLevel ?? undefined}
           icon={AlertTriangle}
           variant={distressData?.riskLevel === "HIGH" ? "amber" : "teal"}
           description="Acoustic tension tier"

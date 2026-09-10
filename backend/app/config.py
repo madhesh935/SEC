@@ -16,20 +16,17 @@ class Settings(BaseSettings):
 
     firebase_project_id: str = Field(default="", alias="FIREBASE_PROJECT_ID")
     firebase_storage_bucket: str = Field(default="", alias="FIREBASE_STORAGE_BUCKET")
-    firebase_service_account_path: str = Field(
-        default="", alias="FIREBASE_SERVICE_ACCOUNT_PATH"
-    )
+    firebase_service_account_path: str = Field(default="", alias="FIREBASE_SERVICE_ACCOUNT_PATH")
     firebase_web_api_key: str = Field(default="", alias="FIREBASE_WEB_API_KEY")
     default_caregiver_role_on_first_login: bool = Field(
         default=True, alias="DEFAULT_CAREGIVER_ROLE_ON_FIRST_LOGIN"
     )
 
-    elevenlabs_api_key: str = Field(default="", alias="ELEVENLABS_API_KEY")
-    elevenlabs_stt_model: str = Field(default="scribe_v1", alias="ELEVENLABS_STT_MODEL")
-    elevenlabs_tts_model: str = Field(
-        default="eleven_turbo_v2_5", alias="ELEVENLABS_TTS_MODEL"
-    )
-    elevenlabs_voice_id: str = Field(default="", alias="ELEVENLABS_VOICE_ID")
+    # Whisper transcribes locally; server TTS uses Google credentials and private Storage.
+    # Runs locally via faster-whisper (free, no API key): tiny, base, small,
+    # medium, or large-v3. Larger models are more accurate but slower and
+    # use more memory.
+    whisper_model: str = Field(default="base", alias="WHISPER_MODEL")
 
     llm_provider: str = Field(default="openrouter", alias="LLM_PROVIDER")
     llm_api_key: str = Field(default="", alias="LLM_API_KEY")
@@ -78,16 +75,12 @@ class Settings(BaseSettings):
             missing.append("FIREBASE_PROJECT_ID")
         if not self.firebase_service_account_path:
             missing.append("FIREBASE_SERVICE_ACCOUNT_PATH")
-        if not self.elevenlabs_api_key:
-            missing.append("ELEVENLABS_API_KEY")
         if not self.llm_api_key:
             missing.append("LLM_API_KEY")
         if not self.jwt_secret:
             missing.append("JWT_SECRET")
         if missing:
-            raise RuntimeError(
-                f"Missing mandatory production configuration: {', '.join(missing)}"
-            )
+            raise RuntimeError(f"Missing mandatory production configuration: {', '.join(missing)}")
 
 
 @lru_cache

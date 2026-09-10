@@ -5,6 +5,8 @@ from __future__ import annotations
 import datetime as dt
 from typing import Any
 
+from google.cloud import firestore
+
 from app.database.firebase import server_timestamp
 from app.database.firestore import db, doc_to_dict, patient_doc, safe_call
 
@@ -15,30 +17,11 @@ class PairingRepository:
     def _collection(self):
         return db().collection("pairing_codes")
 
-    def create(self, patient_id: str, code_hash: str, expires_at: dt.datetime) -> None:
-        safe_call(
-            self._collection().document(code_hash).set,
-            {
-                "patientId": patient_id,
-                "expiresAt": expires_at,
-                "used": False,
-                "createdAt": server_timestamp(),
-            },
-        )
+    def create(self, patient_id: str, code_hash: str, expires_at: dt.datetime) -> bool:
+        return reserve_token(self._collection().document(code_hash), patient_id, expires_at)
 
     def consume(self, code_hash: str) -> dict[str, Any] | None:
-        ref = self._collection().document(code_hash)
-        snapshot = safe_call(ref.get)
-        data = doc_to_dict(snapshot)
-        if data is None or data.get("used"):
-            return None
-        expires_at = data.get("expiresAt")
-        if expires_at is not None:
-            now = dt.datetime.now(dt.timezone.utc)
-            if hasattr(expires_at, "timestamp") and expires_at.timestamp() < now.timestamp():
-                return None
-        safe_call(ref.update, {"used": True})
-        return data
+        return consume_token(self._collection().document(code_hash))
 
 
 class PairingPinRepository:
@@ -46,7 +29,7 @@ class PairingPinRepository:
     'quick setup with preset care PIN' option). Kept in its own top-level
     collection, separate from the long random pairing codes, because a
     4-digit keyspace (10,000 values) collides often enough that the service
-    layer must check-before-create rather than blindly overwrite."""
+    layer reserves codes transactionally rather than overwriting an active token."""
 
     def _collection(self):
         return db().collection("pairing_pins")
@@ -58,28 +41,16 @@ class PairingPinRepository:
             return None
         expires_at = data.get("expiresAt")
         if expires_at is not None:
-            now = dt.datetime.now(dt.timezone.utc)
+            now = dt.datetime.now(dt.UTC)
             if hasattr(expires_at, "timestamp") and expires_at.timestamp() < now.timestamp():
                 return None
         return data
 
-    def create(self, patient_id: str, pin_hash: str, expires_at: dt.datetime) -> None:
-        safe_call(
-            self._collection().document(pin_hash).set,
-            {
-                "patientId": patient_id,
-                "expiresAt": expires_at,
-                "used": False,
-                "createdAt": server_timestamp(),
-            },
-        )
+    def create(self, patient_id: str, pin_hash: str, expires_at: dt.datetime) -> bool:
+        return reserve_token(self._collection().document(pin_hash), patient_id, expires_at)
 
     def consume(self, pin_hash: str) -> dict[str, Any] | None:
-        record = self.get_active(pin_hash)
-        if record is None:
-            return None
-        safe_call(self._collection().document(pin_hash).update, {"used": True})
-        return record
+        return consume_token(self._collection().document(pin_hash))
 
 
 class CaregiverDeviceTokenRepository:
@@ -107,8 +78,51 @@ class PatientDeviceRepository:
         )
 
     def is_bound(self, patient_id: str, device_id: str) -> bool:
-        snapshot = safe_call(
-            patient_doc(patient_id).collection("devices").document(device_id).get
-        )
+        snapshot = safe_call(patient_doc(patient_id).collection("devices").document(device_id).get)
         data = doc_to_dict(snapshot)
         return bool(data and data.get("active"))
+
+
+def reserve_token(ref, patient_id: str, expires_at: dt.datetime) -> bool:
+    """Reserve a code atomically so concurrent caregivers cannot overwrite a live token."""
+
+    @firestore.transactional
+    def reserve(transaction):
+        record = doc_to_dict(ref.get(transaction=transaction))
+        if record and not record.get("used"):
+            expiry = record.get("expiresAt")
+            if (
+                not hasattr(expiry, "timestamp")
+                or expiry.timestamp() > dt.datetime.now(dt.UTC).timestamp()
+            ):
+                return False
+        transaction.set(
+            ref,
+            {
+                "patientId": patient_id,
+                "expiresAt": expires_at,
+                "used": False,
+                "createdAt": server_timestamp(),
+            },
+        )
+        return True
+
+    return safe_call(reserve, db().transaction())
+
+
+def consume_token(ref) -> dict[str, Any] | None:
+    @firestore.transactional
+    def consume(transaction):
+        record = doc_to_dict(ref.get(transaction=transaction))
+        if not record or record.get("used"):
+            return None
+        expiry = record.get("expiresAt")
+        if (
+            not hasattr(expiry, "timestamp")
+            or expiry.timestamp() <= dt.datetime.now(dt.UTC).timestamp()
+        ):
+            return None
+        transaction.update(ref, {"used": True})
+        return record
+
+    return safe_call(consume, db().transaction())

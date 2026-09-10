@@ -5,14 +5,23 @@ status / caregiver live-status projections (spec sections 24-25, 42, 46, 57).
 from __future__ import annotations
 
 from app.ai.orchestrator import InteractionOrchestrator, InteractionResult
-from app.ai.pattern_engine import compute_hourly_distribution, identify_high_risk_windows, is_hour_in_high_risk_window
-from app.core.exceptions import PatientNotFoundError
+from app.ai.pattern_engine import (
+    compute_hourly_distribution,
+    identify_high_risk_windows,
+)
+from app.ai.speech.tts import TextToSpeechService
+from app.ai.stage_engine import get_stage_policy
+from app.core.exceptions import ExternalServiceError, PatientNotFoundError
 from app.database.repositories.conversation_repository import ConversationEventRepository
-from app.database.repositories.event_repository import DistressEventRepository, RepetitionEventRepository
+from app.database.repositories.event_repository import (
+    DistressEventRepository,
+    RepetitionEventRepository,
+)
 from app.database.repositories.family_repository import FamilyRepository
 from app.database.repositories.patient_repository import PatientRepository
-from app.models.enums import AlertSeverity, DistressSeverity
+from app.models.enums import AlertSeverity, DementiaStage
 from app.services.alert_service import AlertService
+from app.services.patient_experience_service import PatientExperienceService
 from app.utils.datetime import days_ago, hours_ago, utcnow
 
 
@@ -26,19 +35,25 @@ class ConversationService:
         patient_repository: PatientRepository | None = None,
         family_repository: FamilyRepository | None = None,
         alert_service: AlertService | None = None,
+        tts_service: TextToSpeechService | None = None,
     ) -> None:
         self.orchestrator = orchestrator or InteractionOrchestrator()
-        self.conversation_event_repository = conversation_event_repository or ConversationEventRepository()
-        self.repetition_event_repository = repetition_event_repository or RepetitionEventRepository()
+        self.conversation_event_repository = (
+            conversation_event_repository or ConversationEventRepository()
+        )
+        self.repetition_event_repository = (
+            repetition_event_repository or RepetitionEventRepository()
+        )
         self.distress_event_repository = distress_event_repository or DistressEventRepository()
         self.patient_repository = patient_repository or PatientRepository()
         self.family_repository = family_repository or FamilyRepository()
         self.alert_service = alert_service or AlertService()
+        self.tts_service = tts_service or TextToSpeechService()
 
-    async def process_text(self, patient_id: str, conversation_id: str | None, text: str) -> InteractionResult:
-        return await self.orchestrator.process_interaction(
-            patient_id, conversation_id, text=text, synthesize_speech=False
-        )
+    async def process_text(
+        self, patient_id: str, conversation_id: str | None, text: str
+    ) -> InteractionResult:
+        return await self.orchestrator.process_interaction(patient_id, conversation_id, text=text)
 
     async def process_voice(
         self,
@@ -48,14 +63,30 @@ class ConversationService:
         filename: str,
         content_type: str,
     ) -> InteractionResult:
-        return await self.orchestrator.process_interaction(
+        result = await self.orchestrator.process_interaction(
             patient_id,
             conversation_id,
             audio_bytes=audio_bytes,
             audio_filename=filename,
             audio_content_type=content_type,
-            synthesize_speech=True,
         )
+        if result.responseText and result.status == "success":
+            patient = self.patient_repository.get(patient_id)
+            policy = get_stage_policy(DementiaStage(patient["configuredStage"]))
+            try:
+                result.responseAudioUrl = await self.tts_service.synthesize(
+                    patient_id,
+                    result.responseText,
+                    patient.get("preferredLanguage", "en"),
+                    policy.pace,
+                )
+            except ExternalServiceError:
+                result.status = "tts_unavailable"
+            if result.uiMode == "comfort":
+                recommendation = PatientExperienceService().recommendation(patient)
+                if recommendation:
+                    result.actions = [recommendation.action]
+        return result
 
     def create_help_request(self, patient_id: str, reason: str | None = None) -> dict:
         patient = self.patient_repository.get(patient_id)
@@ -71,8 +102,8 @@ class ConversationService:
                 "topic": "help_request",
                 "emotion": "neutral",
                 "repetitionCount": 0,
-                "distressScore": 0,
-                "distressSeverity": DistressSeverity.HIGH.value,
+                "distressScore": None,
+                "distressSeverity": None,
                 "strategies": ["CAREGIVER_ESCALATION"],
                 "memoryIdsUsed": [],
                 "safetyFlags": [],
@@ -80,7 +111,7 @@ class ConversationService:
                 "responseText": "",
             },
         )
-        self.alert_service.create_alert(
+        alert = self.alert_service.create_alert(
             patient_id,
             AlertSeverity.HIGH,
             reason or "Patient pressed the request-help button.",
@@ -89,7 +120,11 @@ class ConversationService:
         )
         return {
             "success": True,
-            "message": "Your caregiver has been notified.",
+            "message": (
+                "Your request is in your caregiver’s alerts. Please call if you need help now."
+                if alert.get("notificationStatus") == "failed"
+                else "Your caregiver has been notified."
+            ),
             "timestamp": utcnow().isoformat(),
         }
 
@@ -119,9 +154,12 @@ class ConversationService:
             emergency_contacts[0] if emergency_contacts else None
         )
         if primary:
-            contacts["emergencyPhone"] = primary.get("phone")
+            contacts["familyContactPhone"] = primary.get("phone")
+            contacts["familyContactName"] = primary.get("name")
+        contacts["emergencyPhone"] = patient.get("emergencyServicesPhone")
 
         family_members = self.family_repository.list_patient_visible(patient_id)
+        family_members = [member for member in family_members if member.get("phone")]
         family_members.sort(key=lambda m: m.get("priority", 999))
         if family_members:
             top = family_members[0]
@@ -150,13 +188,15 @@ class ConversationService:
             "intent": latest.get("intent"),
             "detectedEmotion": latest.get("emotion"),
             "repetitionCount": latest.get("repetitionCount", 0),
-            "distressScore": latest.get("distressScore", 0),
+            "distressScore": latest.get("distressScore"),
             "retrievedMemory": latest.get("retrievedMemoryTitle"),
             "selectedStrategy": strategies[0] if strategies else None,
             "aiResponse": latest.get("responseText"),
             "safetyStatus": latest.get("safetyStatus", "normal"),
             "currentStage": patient.get("configuredStage") if patient else None,
-            "sessionStartedAt": created_at.isoformat() if hasattr(created_at, "isoformat") else None,
+            "sessionStartedAt": created_at.isoformat()
+            if hasattr(created_at, "isoformat")
+            else None,
         }
 
     def get_patient_status(self, patient_id: str) -> dict:
@@ -172,11 +212,17 @@ class ConversationService:
         recent_distress_events = self.distress_event_repository.since(patient_id, days_ago(3))
         hourly = compute_hourly_distribution(recent_distress_events)
         windows = identify_high_risk_windows(hourly, threshold=60.0)
-        evening_pattern = "POSSIBLE" if any(18 <= w.hourRangeStart <= 21 for w in windows) else "NONE"
+        evening_pattern = (
+            "POSSIBLE" if any(18 <= w.hourRangeStart <= 21 for w in windows) else "NONE"
+        )
 
-        distress_score = latest_distress.get("distressScore", 0) if latest_distress else 0
-        distress_severity = latest_distress.get("severity", "LOW") if latest_distress else "LOW"
-        current_state = "DISTRESSED" if distress_severity in ("HIGH", "URGENT") else "CALM"
+        distress_score = latest_distress.get("distressScore") if latest_distress else None
+        distress_severity = latest_distress.get("severity") if latest_distress else None
+        current_state = (
+            ("DISTRESSED" if distress_severity in ("HIGH", "URGENT") else "CALM")
+            if distress_severity
+            else None
+        )
 
         last_interaction_at = None
         if today_events:
@@ -189,7 +235,7 @@ class ConversationService:
             "distressScore": distress_score,
             "interactionsToday": len(today_events),
             "repeatedQuestions": len(today_repetitions),
-            "eveningRisk": evening_pattern,
+            "eveningRisk": evening_pattern if recent_distress_events else None,
             "lastActiveTimestamp": last_interaction_at,
         }
 

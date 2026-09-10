@@ -1,13 +1,5 @@
-export interface PatientMemory {
-  id: string;
-  title: string;
-  description?: string;
-  imageUrl?: string;
-  audioUrl?: string;
-  associatedPeople?: string[];
-  displayDate?: string;
-}
+import { z } from "zod";
+import { memorySchema } from "../services/contracts";
+export type PatientMemory = z.infer<typeof memorySchema>;
 
-export interface PatientMemoriesResponse {
-  memories: PatientMemory[];
-}
+export type PatientMemoriesResponse = PatientMemory[];

@@ -1,10 +1,19 @@
 "use client";
 
 import * as React from "react";
+import { QRCodeSVG } from "qrcode.react";
 import { useMutation } from "@tanstack/react-query";
 import { pairingService } from "@/services/pairing.service";
 import { Button } from "@/components/ui/button";
-import { Smartphone, KeyRound, Hash, Copy, Check, RefreshCw, AlertCircle } from "lucide-react";
+import {
+  Smartphone,
+  KeyRound,
+  Hash,
+  Copy,
+  Check,
+  RefreshCw,
+  AlertCircle,
+} from "lucide-react";
 import { cn } from "@/utils/cn";
 
 function useCountdown(expiresAt: string | null) {
@@ -50,7 +59,9 @@ export function PairDeviceCard({ patientId }: { patientId: string }) {
   const value =
     mode === "code" ? codeMutation.data?.pairing_code : pinMutation.data?.pin;
   const expiresAt =
-    mode === "code" ? codeMutation.data?.expires_at : pinMutation.data?.expires_at;
+    mode === "code"
+      ? codeMutation.data?.expires_at
+      : pinMutation.data?.expires_at;
 
   const secondsLeft = useCountdown(expiresAt ?? null);
   const isExpired = secondsLeft === 0;
@@ -75,12 +86,15 @@ export function PairDeviceCard({ patientId }: { patientId: string }) {
     <div className="rounded-2xl border border-slate-200/80 bg-white p-5 shadow-soft space-y-4">
       <div className="flex items-center gap-2 pb-2 border-b border-slate-100">
         <Smartphone className="h-4 w-4 text-teal-700" />
-        <h3 className="text-sm font-bold text-slate-900">Pair Patient Device</h3>
+        <h3 className="text-sm font-bold text-slate-900">
+          Pair Patient Device
+        </h3>
       </div>
 
       <p className="text-xs text-slate-500 leading-relaxed">
-        Generate a short-lived code so the patient app can connect to this profile.
-        Enter it on the device&apos;s onboarding screen within the time shown.
+        Generate a short-lived code so the patient app can connect to this
+        profile. Enter it on the device&apos;s onboarding screen within the time
+        shown.
       </p>
 
       {/* Mode Selector */}
@@ -90,7 +104,9 @@ export function PairDeviceCard({ patientId }: { patientId: string }) {
           onClick={() => setMode("code")}
           className={cn(
             "flex-1 flex items-center justify-center gap-1.5 rounded-lg py-2 transition-colors",
-            mode === "code" ? "bg-white text-teal-800 shadow-2xs" : "text-slate-500"
+            mode === "code"
+              ? "bg-white text-teal-800 shadow-2xs"
+              : "text-slate-500",
           )}
         >
           <KeyRound className="h-3.5 w-3.5" />
@@ -101,7 +117,9 @@ export function PairDeviceCard({ patientId }: { patientId: string }) {
           onClick={() => setMode("pin")}
           className={cn(
             "flex-1 flex items-center justify-center gap-1.5 rounded-lg py-2 transition-colors",
-            mode === "pin" ? "bg-white text-teal-800 shadow-2xs" : "text-slate-500"
+            mode === "pin"
+              ? "bg-white text-teal-800 shadow-2xs"
+              : "text-slate-500",
           )}
         >
           <Hash className="h-3.5 w-3.5" />
@@ -118,26 +136,44 @@ export function PairDeviceCard({ patientId }: { patientId: string }) {
 
       {value && !isExpired ? (
         <div className="rounded-2xl border-2 border-dashed border-teal-300 bg-teal-50/40 p-5 text-center space-y-2">
+          {mode === "code" && (
+            <div className="flex justify-center p-4 bg-white rounded-xl">
+              <QRCodeSVG
+                value={"gericare://pair?code=" + value}
+                size={192}
+                marginSize={4}
+                title="Scan to pair this patient device"
+              />
+            </div>
+          )}
           <span className="text-3xl font-bold tracking-[0.2em] text-teal-900">
             {value}
           </span>
           <div className="flex items-center justify-center gap-3 text-xs">
             <span className="text-slate-500">
-              Expires in <span className="font-semibold text-slate-700">{formatCountdown(secondsLeft)}</span>
+              Expires in{" "}
+              <span className="font-semibold text-slate-700">
+                {formatCountdown(secondsLeft)}
+              </span>
             </span>
             <button
               type="button"
               onClick={handleCopy}
               className="flex items-center gap-1 font-semibold text-teal-700 hover:text-teal-900"
             >
-              {copied ? <Check className="h-3.5 w-3.5" /> : <Copy className="h-3.5 w-3.5" />}
+              {copied ? (
+                <Check className="h-3.5 w-3.5" />
+              ) : (
+                <Copy className="h-3.5 w-3.5" />
+              )}
               {copied ? "Copied" : "Copy"}
             </button>
           </div>
         </div>
       ) : value && isExpired ? (
         <div className="rounded-2xl border border-amber-200 bg-amber-50 p-4 text-center text-xs text-amber-800">
-          This {mode === "code" ? "code" : "PIN"} has expired. Generate a new one below.
+          This {mode === "code" ? "code" : "PIN"} has expired. Generate a new
+          one below.
         </div>
       ) : null}
 
@@ -151,7 +187,9 @@ export function PairDeviceCard({ patientId }: { patientId: string }) {
       >
         <RefreshCw className="h-4 w-4" />
         <span>
-          {value ? `Generate New ${mode === "code" ? "Code" : "PIN"}` : `Generate ${mode === "code" ? "Pairing Code" : "PIN"}`}
+          {value
+            ? `Generate New ${mode === "code" ? "Code" : "PIN"}`
+            : `Generate ${mode === "code" ? "Pairing Code" : "PIN"}`}
         </span>
       </Button>
     </div>

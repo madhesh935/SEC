@@ -154,7 +154,7 @@ export default function DashboardOverviewPage() {
         {/* 1. Current State */}
         <MetricCard
           label="Current State"
-          value={status?.currentState}
+          value={status?.currentState ?? undefined}
           icon={Activity}
           variant="teal"
           description="Observable interaction state"
@@ -165,7 +165,7 @@ export default function DashboardOverviewPage() {
         {/* 2. Distress Level */}
         <MetricCard
           label="Distress Level"
-          value={status?.distressScore !== undefined ? `${status.distressScore} / 100` : undefined}
+          value={status?.distressScore != null ? `${status.distressScore} / 100` : undefined}
           icon={HeartPulse}
           variant="amber"
           description="AI interaction tension score"

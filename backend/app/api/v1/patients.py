@@ -21,6 +21,7 @@ from app.schemas.patient import (
 )
 from app.services.analytics_service import AnalyticsService
 from app.services.conversation_service import ConversationService
+from app.services.patient_content_service import PatientContentService
 from app.services.patient_service import PatientService
 
 router = APIRouter(prefix="/patients", tags=["Patients"])
@@ -37,7 +38,9 @@ async def create_patient(
 
 
 @router.get("", response_model=list[PatientAdmin])
-async def list_patients(user: AuthenticatedUser = Depends(get_current_caregiver)) -> list[PatientAdmin]:
+async def list_patients(
+    user: AuthenticatedUser = Depends(get_current_caregiver),
+) -> list[PatientAdmin]:
     service = PatientService()
     patients = service.list_for_caregiver(user.uid)
     return [PatientAdmin(**p) for p in patients]
@@ -48,7 +51,14 @@ async def get_patient(
     context: PatientAccessContext = Depends(get_patient_access_context),
 ) -> PatientAdmin | PatientPublic:
     if context.is_device:
-        return PatientPublic(**context.patient)
+        content = PatientContentService(context.patient)
+        data = dict(context.patient)
+        data["profilePhotoUrl"] = (
+            content.media_url(data.get("profilePhotoUrl"))
+            if content.consent.get("photosUsage", True)
+            else None
+        )
+        return PatientPublic(**data)
     enriched = PatientService().get_patient(context.patient["id"], include_last_interaction=True)
     return PatientAdmin(**enriched)
 
@@ -76,14 +86,18 @@ async def archive_patient(
 
 
 @router.get("/{patient_id}/status", response_model=PatientStatusResponse)
-async def get_patient_status(patient: dict = Depends(authorize_patient_access)) -> PatientStatusResponse:
+async def get_patient_status(
+    patient: dict = Depends(authorize_patient_access),
+) -> PatientStatusResponse:
     service = ConversationService()
     status = service.get_patient_status(patient["id"])
     return PatientStatusResponse(**status)
 
 
 @router.get("/{patient_id}/live-status", response_model=PatientLiveStatusResponse)
-async def get_live_status(patient: dict = Depends(authorize_patient_access)) -> PatientLiveStatusResponse:
+async def get_live_status(
+    patient: dict = Depends(authorize_patient_access),
+) -> PatientLiveStatusResponse:
     service = ConversationService()
     status = service.get_live_status(patient["id"])
     return PatientLiveStatusResponse(**status)

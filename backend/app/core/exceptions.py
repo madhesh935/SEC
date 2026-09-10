@@ -51,11 +51,6 @@ class SpeechRecognitionError(GeriCareError):
     status_code = 422
 
 
-class SpeechSynthesisError(GeriCareError):
-    code = "SPEECH_SYNTHESIS_ERROR"
-    status_code = 502
-
-
 class LLMServiceError(GeriCareError):
     code = "LLM_SERVICE_ERROR"
     status_code = 502

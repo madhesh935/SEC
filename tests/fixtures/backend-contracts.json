@@ -1,0 +1,137 @@
+{
+  "patientSchema": {
+    "id": "patient-1",
+    "firstName": "Test Person",
+    "preferredName": "Test Preferred",
+    "preferredLanguage": "en",
+    "profilePhotoUrl": null
+  },
+  "familySchema": {
+    "id": "record-1",
+    "name": "Test Relative",
+    "relationship": "Sibling",
+    "photoUrl": "https://media.test/family.jpg",
+    "phoneAvailable": true,
+    "phoneNumber": "+15550100000",
+    "voiceMessageAvailable": false,
+    "voiceMessageUrl": null,
+    "description": "We enjoy our walks."
+  },
+  "memorySchema": {
+    "id": "record-1",
+    "category": "MUSIC",
+    "photoUrls": [],
+    "people": [
+      {
+        "id": "record-1",
+        "name": "Test Relative",
+        "relationship": "Sibling",
+        "photoUrl": "https://media.test/family.jpg",
+        "phoneAvailable": true,
+        "phoneNumber": "+15550100000",
+        "voiceMessageAvailable": false,
+        "voiceMessageUrl": null,
+        "description": "We enjoy our walks."
+      }
+    ],
+    "title": "Test Garden",
+    "description": "We cared for the flowers together.",
+    "imageUrl": "https://media.test/garden.jpg",
+    "audioUrl": "https://media.test/song.mp3",
+    "associatedPeople": [
+      "Test Relative"
+    ],
+    "displayDate": "A summer afternoon"
+  },
+  "settingsSchema": {
+    "textSize": "large",
+    "reducedMotion": false,
+    "voiceVolume": 0.9,
+    "replayVoiceResponse": true
+  },
+  "helpSchema": {
+    "caregiverName": null,
+    "caregiverPhone": null,
+    "caregiverAvailable": null,
+    "emergencyPhone": null,
+    "familyContactPhone": "+15550100000",
+    "familyContactName": "Test Relative"
+  },
+  "recommendationSchema": {
+    "title": "A memory you may enjoy",
+    "action": {
+      "type": "SHOW_MEMORY",
+      "label": "See Memory",
+      "resourceId": "record-1"
+    }
+  },
+  "activityDetailSchema": {
+    "id": "family:record-1",
+    "type": "family_recognition",
+    "title": "Family Match",
+    "description": "Recognize your loved ones",
+    "prompt": "Who is in this photo?",
+    "difficulty": "gentle",
+    "interactionMode": "choice",
+    "imageUrl": "https://media.test/family.jpg",
+    "audioUrl": null,
+    "nextActivityId": null,
+    "options": [
+      {
+        "id": "record-1",
+        "label": "Test Relative"
+      }
+    ],
+    "steps": []
+  },
+  "comfortSchema": {
+    "id": "memory:record-1",
+    "resourceId": "record-1",
+    "type": "music",
+    "title": "Test Garden",
+    "mediaUrl": "https://media.test/song.mp3",
+    "imageUrl": "https://media.test/garden.jpg",
+    "durationSeconds": null,
+    "description": "We cared for the flowers together."
+  },
+  "activitySchema": {
+    "id": "family:record-1",
+    "type": "family_recognition",
+    "title": "Family Match",
+    "description": "Recognize your loved ones",
+    "iconName": null,
+    "estimatedMinutes": null,
+    "completed": false
+  },
+  "pairingSchema": {
+    "accessToken": "test-access-token",
+    "refreshToken": "test-refresh-token",
+    "patientId": "patient-1",
+    "patientPreferredName": "Test Preferred"
+  },
+  "helpResultSchema": {
+    "success": true,
+    "message": "Your caregiver has been notified.",
+    "timestamp": "2026-09-10T15:45:45.733416+00:00"
+  },
+  "feedbackSchema": {
+    "activityId": "family:record-1",
+    "patientId": "patient-1",
+    "result": "completed",
+    "response": [
+      "record-1"
+    ],
+    "completionTime": 2.0,
+    "timestamp": "2026-09-10T15:45:45.738869+00:00",
+    "feedback": "That\u2019s right."
+  },
+  "conversationSchema": {
+    "actions": [],
+    "conversationId": "record-1",
+    "transcript": "I enjoy my garden.",
+    "responseText": "We can enjoy a quiet moment together.",
+    "responseAudioUrl": "https://media.test/response.mp3",
+    "status": "success",
+    "uiMode": "normal"
+  }
+}

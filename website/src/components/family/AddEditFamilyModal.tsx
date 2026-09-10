@@ -1,6 +1,8 @@
 "use client";
 
 import * as React from "react";
+import { useParams } from "next/navigation";
+import { MediaUploader } from "@/components/media/MediaUploader";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import {
@@ -27,7 +29,9 @@ export function AddEditFamilyModal({
   initialData,
   isLoading = false,
 }: AddEditFamilyModalProps) {
+  const params = useParams();
   const {
+    setValue,
     register,
     handleSubmit,
     reset,
@@ -41,12 +45,16 @@ export function AddEditFamilyModal({
       phone: "",
       priority: 1,
       voiceRecordingUrl: "",
+      description: "",
+      patientVisible: true,
     },
   });
 
   React.useEffect(() => {
     if (initialData) {
       reset({
+        description: initialData.description || "",
+        patientVisible: initialData.patientVisible ?? true,
         name: initialData.name,
         relationship: initialData.relationship || "",
         photoUrl: initialData.photoUrl || "",
@@ -62,6 +70,8 @@ export function AddEditFamilyModal({
         phone: "",
         priority: 1,
         voiceRecordingUrl: "",
+        description: "",
+        patientVisible: true,
       });
     }
   }, [initialData, reset]);
@@ -79,13 +89,29 @@ export function AddEditFamilyModal({
       description="Connect an authorized family member to allow voice note soothing and memory contributions."
       maxWidth="md"
     >
-      <form onSubmit={handleSubmit(handleFormSubmit)} className="space-y-4 pt-1">
+      <form
+        onSubmit={handleSubmit(handleFormSubmit)}
+        className="space-y-4 pt-1"
+      >
+        <label className="block text-sm">
+          Patient-safe description
+          <Input {...register("description")} />
+        </label>
+        <label className="flex gap-2 text-sm">
+          <input type="checkbox" {...register("patientVisible")} />
+          Visible in patient app
+        </label>
+        <MediaUploader
+          patientId={params.patientId as string}
+          onImageUploaded={(url) => setValue("photoUrl", url)}
+          onAudioUploaded={(url) => setValue("voiceRecordingUrl", url)}
+        />
         <div>
           <label className="block text-xs font-semibold text-slate-700 uppercase mb-1">
             Full Name *
           </label>
           <Input
-            placeholder="e.g. Sarah Jenkins"
+            placeholder="Full name"
             error={!!errors.name}
             {...register("name")}
           />
@@ -115,12 +141,7 @@ export function AddEditFamilyModal({
             <label className="block text-xs font-semibold text-slate-700 uppercase mb-1">
               Contact Priority (1-10)
             </label>
-            <Input
-              type="number"
-              min={1}
-              max={10}
-              {...register("priority")}
-            />
+            <Input type="number" min={1} max={10} {...register("priority")} />
           </div>
         </div>
 
@@ -128,32 +149,24 @@ export function AddEditFamilyModal({
           <label className="block text-xs font-semibold text-slate-700 uppercase mb-1">
             Phone Number
           </label>
-          <Input
-            placeholder="+1 (555) 000-0000"
-            {...register("phone")}
-          />
+          <Input placeholder="+1 (555) 000-0000" {...register("phone")} />
         </div>
 
         <div>
           <label className="block text-xs font-semibold text-slate-700 uppercase mb-1">
             Photo URL
           </label>
-          <Input
-            placeholder="https://..."
-            {...register("photoUrl")}
-          />
+          <Input placeholder="https://..." {...register("photoUrl")} />
         </div>
 
         <div>
           <label className="block text-xs font-semibold text-slate-700 uppercase mb-1">
             Voice Recording URL (Placeholder)
           </label>
-          <Input
-            placeholder="https://..."
-            {...register("voiceRecordingUrl")}
-          />
+          <Input placeholder="https://..." {...register("voiceRecordingUrl")} />
           <p className="text-[11px] text-slate-400 mt-1">
-            Caregivers can attach pre-recorded calming audio clips from family members.
+            Caregivers can attach pre-recorded calming audio clips from family
+            members.
           </p>
         </div>
 

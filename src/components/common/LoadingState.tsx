@@ -1,8 +1,8 @@
-import React, { useEffect, useRef } from 'react';
-import { View, Text, Animated, Easing, Platform } from 'react-native';
-import { useSettingsStore } from '../../store/settings.store';
+import React, { useEffect, useRef } from "react";
+import { View, Text, Animated, Easing, Platform } from "react-native";
+import { useSettingsStore } from "../../store/settings.store";
 
-const NATIVE_DRIVER = Platform.OS !== 'web';
+const NATIVE_DRIVER = Platform.OS !== "web";
 
 interface LoadingStateProps {
   message?: string;
@@ -10,7 +10,7 @@ interface LoadingStateProps {
 }
 
 export const LoadingState: React.FC<LoadingStateProps> = ({
-  message = 'Just a moment...',
+  message = "Just a moment...",
   subMessage,
 }) => {
   const pulseAnim = useRef(new Animated.Value(1)).current;
@@ -33,7 +33,7 @@ export const LoadingState: React.FC<LoadingStateProps> = ({
           easing: Easing.inOut(Easing.ease),
           useNativeDriver: NATIVE_DRIVER,
         }),
-      ])
+      ]),
     );
 
     animation.start();

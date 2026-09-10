@@ -47,7 +47,7 @@ class EmbeddingEngine:
         logger.info("embedding_model_loaded", model=settings.embedding_model)
 
     @property
-    def model(self) -> "SentenceTransformer":
+    def model(self) -> SentenceTransformer:
         if self._model is None:
             self.load()
         assert self._model is not None

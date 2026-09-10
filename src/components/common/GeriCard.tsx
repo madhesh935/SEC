@@ -1,7 +1,7 @@
-import React from 'react';
-import { View, TouchableOpacity, ViewStyle } from 'react-native';
+import React from "react";
+import { View, TouchableOpacity, ViewStyle } from "react-native";
 
-export type CardVariant = 'default' | 'mint' | 'blue' | 'lavender' | 'comfort';
+export type CardVariant = "default" | "mint" | "blue" | "lavender" | "comfort";
 
 interface GeriCardProps {
   children: React.ReactNode;
@@ -17,8 +17,8 @@ interface GeriCardProps {
 export const GeriCard: React.FC<GeriCardProps> = ({
   children,
   onPress,
-  variant = 'default',
-  className = '',
+  variant = "default",
+  className = "",
   style,
   accessible = true,
   accessibilityLabel,
@@ -26,17 +26,17 @@ export const GeriCard: React.FC<GeriCardProps> = ({
 }) => {
   const getVariantClasses = () => {
     switch (variant) {
-      case 'mint':
-        return 'bg-mint-50 border-mint-200';
-      case 'blue':
-        return 'bg-softblue-50 border-softblue-200';
-      case 'lavender':
-        return 'bg-lavender-50 border-lavender-200';
-      case 'comfort':
-        return 'bg-comfort-card border-amber-200';
-      case 'default':
+      case "mint":
+        return "bg-mint-50 border-mint-200";
+      case "blue":
+        return "bg-softblue-50 border-softblue-200";
+      case "lavender":
+        return "bg-lavender-50 border-lavender-200";
+      case "comfort":
+        return "bg-comfort-card border-amber-200";
+      case "default":
       default:
-        return 'bg-white border-navy-100 shadow-sm';
+        return "bg-white border-navy-100 shadow-sm";
     }
   };
 

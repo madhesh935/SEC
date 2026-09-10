@@ -6,7 +6,10 @@ from app.ai.distress_engine import DistressResult
 from app.ai.safety_engine import SafetyAssessment
 from app.ai.strategy_engine import StrategyDecision
 from app.core.exceptions import ResourceNotFoundError
-from app.database.repositories.alert_repository import AlertCollectionGroupRepository, AlertRepository
+from app.database.repositories.alert_repository import (
+    AlertCollectionGroupRepository,
+    AlertRepository,
+)
 from app.database.repositories.patient_repository import PatientRepository
 from app.models.enums import AlertSeverity, AlertStatus, DistressSeverity
 from app.services.notification_service import NotificationService
@@ -46,8 +49,11 @@ class AlertService:
         )
         patient = self.patient_repository.get(patient_id)
         caregiver_id = patient.get("primaryCaregiverId") if patient else None
+        alert["notificationStatus"] = "not_configured"
         if caregiver_id:
-            self.notification_service.notify_caregiver_of_alert(caregiver_id, alert["id"], patient_id)
+            alert["notificationStatus"] = self.notification_service.notify_caregiver_of_alert(
+                caregiver_id, alert["id"], patient_id
+            )
         return alert
 
     def maybe_create_alert(
@@ -63,11 +69,15 @@ class AlertService:
                 patient_id,
                 AlertSeverity.URGENT,
                 "Possible emergency / immediate safety language detected.",
-                "The AI companion detected language suggesting a possible emergency during a patient interaction.",
+                "The AI companion detected language suggesting a possible emergency "
+                "during a patient interaction.",
                 event_id,
             )
 
-        if not strategy.escalate and distress.severity in (DistressSeverity.LOW, DistressSeverity.MODERATE):
+        if not strategy.escalate and distress.severity in (
+            DistressSeverity.LOW,
+            DistressSeverity.MODERATE,
+        ):
             return None
 
         severity_map = {
@@ -81,7 +91,8 @@ class AlertService:
             patient_id,
             severity,
             reason,
-            "Observed distress signals during a patient interaction indicate this may need attention.",
+            "Observed distress signals during a patient interaction "
+            "indicate this may need attention.",
             event_id,
         )
 
@@ -96,12 +107,16 @@ class AlertService:
             raise ResourceNotFoundError("Alert was not found.")
         return alert
 
-    def acknowledge(self, patient_id: str, alert_id: str, performed_by: str, note: str | None = None) -> dict:
+    def acknowledge(
+        self, patient_id: str, alert_id: str, performed_by: str, note: str | None = None
+    ) -> dict:
         self.get_alert(patient_id, alert_id)
         self.alert_repository.acknowledge(patient_id, alert_id, performed_by, note)
         return self.alert_repository.get(patient_id, alert_id)
 
-    def resolve(self, patient_id: str, alert_id: str, performed_by: str, note: str | None = None) -> dict:
+    def resolve(
+        self, patient_id: str, alert_id: str, performed_by: str, note: str | None = None
+    ) -> dict:
         self.get_alert(patient_id, alert_id)
         self.alert_repository.resolve(patient_id, alert_id, performed_by, note)
         return self.alert_repository.get(patient_id, alert_id)

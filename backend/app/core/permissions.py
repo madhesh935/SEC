@@ -35,7 +35,9 @@ def require_patient_access(
     raise AuthorizationError("You do not have access to this patient's records.")
 
 
-def require_family_access(user: AuthenticatedUser, patient_id: str, family_patient_ids: list[str]) -> None:
+def require_family_access(
+    user: AuthenticatedUser, patient_id: str, family_patient_ids: list[str]
+) -> None:
     if user.role == UserRole.ADMIN:
         return
     if user.role == UserRole.FAMILY and patient_id in family_patient_ids:

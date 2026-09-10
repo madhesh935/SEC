@@ -1,3 +1,5 @@
+import { z } from "zod";
+import { pairingSchema } from "../services/contracts";
 export interface VerifyPairingRequest {
   pairingCode: string;
   deviceId: string;
@@ -8,9 +10,4 @@ export interface VerifyPinRequest {
   deviceId: string;
 }
 
-export interface PairingResponse {
-  accessToken: string;
-  refreshToken: string;
-  patientId: string;
-  patientPreferredName?: string;
-}
+export type PairingResponse = z.infer<typeof pairingSchema>;

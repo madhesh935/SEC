@@ -8,7 +8,7 @@ and handles persistence/alerting side effects.
 
 from __future__ import annotations
 
-from pydantic import BaseModel
+from pydantic import BaseModel, Field
 
 from app.ai.distress_engine import score_distress
 from app.ai.embeddings import EmbeddingEngine
@@ -16,7 +16,11 @@ from app.ai.emotion_engine import analyze_emotion
 from app.ai.intent_engine import extract_intent
 from app.ai.llm_service import LLMService
 from app.ai.memory_engine import retrieve_relevant_memories, structured_family_lookup
-from app.ai.pattern_engine import compute_hourly_distribution, identify_high_risk_windows, is_hour_in_high_risk_window
+from app.ai.pattern_engine import (
+    compute_hourly_distribution,
+    identify_high_risk_windows,
+    is_hour_in_high_risk_window,
+)
 from app.ai.repetition_engine import RecentUtterance, analyze_repetition
 from app.ai.response_validator import (
     SAFE_FALLBACK_EMERGENCY,
@@ -25,21 +29,24 @@ from app.ai.response_validator import (
 )
 from app.ai.safety_engine import assess_safety
 from app.ai.speech.stt import SpeechToTextService
-from app.ai.speech.tts import TextToSpeechService
 from app.ai.stage_engine import get_stage_policy
 from app.ai.strategy_engine import StrategyDecision, decide_strategy
 from app.config import get_settings
-from app.core.exceptions import PatientNotFoundError, SpeechSynthesisError, ValidationError, LLMServiceError
+from app.core.exceptions import LLMServiceError, PatientNotFoundError, ValidationError
 from app.core.logging import get_logger
 from app.database.repositories.conversation_repository import (
     ConversationEventRepository,
     ConversationRepository,
 )
-from app.database.repositories.event_repository import DistressEventRepository, RepetitionEventRepository
+from app.database.repositories.event_repository import (
+    DistressEventRepository,
+    RepetitionEventRepository,
+)
 from app.database.repositories.family_repository import FamilyRepository
 from app.database.repositories.memory_repository import MemoryRepository
 from app.database.repositories.patient_repository import PatientRepository
 from app.models.enums import DementiaStage, ResponseStrategy, UiMode
+from app.schemas.patient_experience import PatientAction
 from app.services.alert_service import AlertService
 from app.services.consent_service import ConsentService
 from app.utils.datetime import days_ago, utcnow
@@ -48,6 +55,7 @@ logger = get_logger(__name__)
 
 
 class InteractionResult(BaseModel):
+    actions: list[PatientAction] = Field(default_factory=list)
     conversationId: str
     transcript: str
     responseText: str
@@ -71,21 +79,23 @@ class InteractionOrchestrator:
         embedding_engine: EmbeddingEngine | None = None,
         llm_service: LLMService | None = None,
         stt_service: SpeechToTextService | None = None,
-        tts_service: TextToSpeechService | None = None,
     ) -> None:
         self.patient_repository = patient_repository or PatientRepository()
         self.family_repository = family_repository or FamilyRepository()
         self.memory_repository = memory_repository or MemoryRepository()
         self.conversation_repository = conversation_repository or ConversationRepository()
-        self.conversation_event_repository = conversation_event_repository or ConversationEventRepository()
-        self.repetition_event_repository = repetition_event_repository or RepetitionEventRepository()
+        self.conversation_event_repository = (
+            conversation_event_repository or ConversationEventRepository()
+        )
+        self.repetition_event_repository = (
+            repetition_event_repository or RepetitionEventRepository()
+        )
         self.distress_event_repository = distress_event_repository or DistressEventRepository()
         self.consent_service = consent_service or ConsentService()
         self.alert_service = alert_service or AlertService()
         self.embedding_engine = embedding_engine or EmbeddingEngine()
         self.llm_service = llm_service or LLMService()
         self.stt_service = stt_service or SpeechToTextService()
-        self.tts_service = tts_service or TextToSpeechService()
 
     async def process_interaction(
         self,
@@ -96,11 +106,21 @@ class InteractionOrchestrator:
         audio_bytes: bytes | None = None,
         audio_filename: str | None = None,
         audio_content_type: str | None = None,
-        synthesize_speech: bool = False,
     ) -> InteractionResult:
         patient = self.patient_repository.get(patient_id)
         if not patient or patient.get("archived"):
             raise PatientNotFoundError("Patient profile was not found.")
+
+        consent = self.consent_service.get_consent(patient_id)
+        if not self.consent_service.is_ai_conversation_enabled(consent):
+            return InteractionResult(
+                conversationId=conversation_id or "",
+                transcript="",
+                responseText="Your companion is turned off. Please ask your caregiver.",
+                responseAudioUrl=None,
+                status="ai_disabled",
+                uiMode="normal",
+            )
 
         transcript = text
         if audio_bytes is not None:
@@ -120,18 +140,6 @@ class InteractionOrchestrator:
             raise ValidationError("No speech or text was provided.")
 
         settings = get_settings()
-        consent = self.consent_service.get_consent(patient_id)
-
-        if not self.consent_service.is_ai_conversation_enabled(consent):
-            return InteractionResult(
-                conversationId=conversation_id or "",
-                transcript=transcript,
-                responseText="The AI companion is currently turned off. Please check with your caregiver.",
-                responseAudioUrl=None,
-                status="ai_disabled",
-                uiMode=UiMode.NORMAL.value,
-            )
-
         conversation = self.conversation_repository.get_or_create(patient_id, conversation_id)
         conversation_id = conversation["id"]
 
@@ -146,7 +154,9 @@ class InteractionOrchestrator:
             patient_id, conversation_id, limit=6
         )
         recent_utterances = [
-            RecentUtterance(text=e["transcript"], embedding=e["embedding"], created_at=e["createdAt"])
+            RecentUtterance(
+                text=e["transcript"], embedding=e["embedding"], created_at=e["createdAt"]
+            )
             for e in recent_events
             if e.get("embedding") and e.get("createdAt")
         ]
@@ -164,19 +174,30 @@ class InteractionOrchestrator:
         ]
 
         referenced_family_member = None
-        if intent.referencedPersonName:
+        if intent.referencedPersonName and self.consent_service.is_biography_allowed_for_ai(
+            consent
+        ):
             family_members = self.family_repository.list_patient_visible(patient_id)
-            referenced_family_member = structured_family_lookup(intent.referencedPersonName, family_members)
+            referenced_family_member = structured_family_lookup(
+                intent.referencedPersonName, family_members
+            )
 
         memories = []
         if self.consent_service.is_biography_allowed_for_ai(consent):
             all_memories = self.memory_repository.list_ai_usable(patient_id)
-            usable = [m for m in all_memories if self.consent_service.is_memory_allowed_for_ai(m, consent)]
+            usable = [
+                m for m in all_memories if self.consent_service.is_memory_allowed_for_ai(m, consent)
+            ]
             memories = retrieve_relevant_memories(query_embedding, usable)
+            for memory in memories:
+                memory.mayMentionDirectly = bool(
+                    memory.mayMentionDirectly and consent.get("aiMayMentionMemoryDirectly", False)
+                )
 
         has_relevant_memory = bool(memories) or referenced_family_member is not None
         memory_may_mention = bool(referenced_family_member) or any(
-            m.mayMentionDirectly and consent.get("aiMayMentionMemoryDirectly", False) for m in memories
+            m.mayMentionDirectly and consent.get("aiMayMentionMemoryDirectly", False)
+            for m in memories
         )
 
         recent_distress_events = self.distress_event_repository.since(patient_id, days_ago(1))
@@ -184,7 +205,9 @@ class InteractionOrchestrator:
         recent_distress_average = sum(scores) / len(scores) if scores else 0.0
 
         hourly = compute_hourly_distribution(recent_distress_events)
-        windows = identify_high_risk_windows(hourly, threshold=float(settings.distress_alert_threshold))
+        windows = identify_high_risk_windows(
+            hourly, threshold=float(settings.distress_alert_threshold)
+        )
         is_evening_window = is_hour_in_high_risk_window(utcnow().hour, windows)
 
         safety = assess_safety(transcript, emotion.matchedCues)
@@ -222,7 +245,9 @@ class InteractionOrchestrator:
             consent=consent,
         )
 
-        fallback_text = SAFE_FALLBACK_EMERGENCY if safety.emergencyDetected else SAFE_FALLBACK_GENERIC
+        fallback_text = (
+            SAFE_FALLBACK_EMERGENCY if safety.emergencyDetected else SAFE_FALLBACK_GENERIC
+        )
         response_text = await self._generate_validated_response(
             system_prompt, transcript, stage_policy, strategy, memories, fallback_text
         )
@@ -233,16 +258,13 @@ class InteractionOrchestrator:
         elif ResponseStrategy.COMFORT_MODE in strategy.strategies:
             ui_mode = UiMode.COMFORT
 
-        audio_url = None
-        if synthesize_speech:
-            try:
-                audio_url = await self.tts_service.synthesize(response_text, patient_id)
-            except SpeechSynthesisError:
-                audio_url = None
-
         if safety.emergencyDetected:
             safety_status = "emergency"
-        elif safety.possibleFalseBeliefContext or safety.fearLevel in ("moderate", "high") or strategy.escalate:
+        elif (
+            safety.possibleFalseBeliefContext
+            or safety.fearLevel in ("moderate", "high")
+            or strategy.escalate
+        ):
             safety_status = "caution"
         else:
             safety_status = "normal"
@@ -294,13 +316,16 @@ class InteractionOrchestrator:
             },
         )
 
-        self.alert_service.maybe_create_alert(patient_id, distress, strategy, safety, event.get("id"))
+        if self.consent_service.is_emergency_escalation_allowed(consent):
+            self.alert_service.maybe_create_alert(
+                patient_id, distress, strategy, safety, event.get("id")
+            )
 
         return InteractionResult(
             conversationId=conversation_id,
             transcript=transcript,
             responseText=response_text,
-            responseAudioUrl=audio_url,
+            responseAudioUrl=None,
             status="success",
             uiMode=ui_mode.value,
         )
@@ -323,10 +348,12 @@ class InteractionOrchestrator:
         ]
 
         try:
-            response_text = await self.llm_service.generate_patient_response(system_prompt, transcript)
+            response_text = await self.llm_service.generate_patient_response(
+                system_prompt, transcript
+            )
         except LLMServiceError:
             logger.warning("llm_generation_failed")
-            return fallback_text
+            raise
 
         validation = validate_response(response_text, stage_policy, strategy, restricted_snippets)
         if validation.passed:
@@ -334,20 +361,26 @@ class InteractionOrchestrator:
 
         logger.info("response_validation_failed_retrying", violations=validation.violations)
         stricter_prompt = (
-            system_prompt
-            + f"\n\nSTRICT CONSTRAINT: Keep your reply to at most {stage_policy.maxSentences} short "
-            "sentence(s). Do not repeat, confirm, or reference any restricted or unverified information."
+            system_prompt + f"\n\nSTRICT CONSTRAINT: Use at most {stage_policy.maxSentences} short "
+            "sentence(s). Do not repeat, confirm, or reference any restricted "
+            "or unverified information."
         )
         try:
-            retry_text = await self.llm_service.generate_patient_response(stricter_prompt, transcript)
+            retry_text = await self.llm_service.generate_patient_response(
+                stricter_prompt, transcript
+            )
         except LLMServiceError:
-            return fallback_text
+            raise
 
-        retry_validation = validate_response(retry_text, stage_policy, strategy, restricted_snippets)
+        retry_validation = validate_response(
+            retry_text, stage_policy, strategy, restricted_snippets
+        )
         if retry_validation.passed:
             return retry_text
 
-        logger.warning("response_validation_failed_after_retry", violations=retry_validation.violations)
+        logger.warning(
+            "response_validation_failed_after_retry", violations=retry_validation.violations
+        )
         return fallback_text
 
     def _build_system_prompt(
@@ -365,9 +398,11 @@ class InteractionOrchestrator:
         lines = [
             "You are GeriCare, a warm, calm voice companion for a person living with dementia.",
             f"Address them as {name}. Respond in language code: {language}.",
-            f"Maximum {stage_policy.maxSentences} short sentence(s). Language complexity: {stage_policy.languageComplexity}. "
+            f"Maximum {stage_policy.maxSentences} short sentence(s). Language "
+            f"complexity: {stage_policy.languageComplexity}. "
             f"Speaking pace guidance: {stage_policy.pace}.",
-            f"Tone: {strategy.tone}. Chosen response strategies: {', '.join(s.value for s in strategy.strategies)}.",
+            f"Tone: {strategy.tone}. Chosen response strategies: "
+            f"{', '.join(s.value for s in strategy.strategies)}.",
             "You must strictly follow the chosen strategies and never invent facts.",
         ]
 
@@ -390,21 +425,27 @@ class InteractionOrchestrator:
         if referenced_family_member:
             lines.append(
                 f"The person asked about '{referenced_family_member.get('name')}', who is their "
-                f"{referenced_family_member.get('relationship')}. You may mention this relationship warmly."
+                f"{referenced_family_member.get('relationship')}. You may mention "
+                f"this relationship warmly."
             )
 
         for memory in memories:
             if memory.mayMentionDirectly:
-                lines.append(f"You may gently reference this approved memory if relevant: {memory.title} - {memory.description}")
+                lines.append(
+                    f"You may gently reference this approved memory if relevant: "
+                    f"{memory.title} - {memory.description}"
+                )
             else:
                 lines.append(
-                    f"A related memory exists ('{memory.title}') but you must NOT reveal its content directly - "
+                    f"A related memory exists ('{memory.title}') but you must NOT "
+                    f"reveal its content directly - "
                     "use it only to inform a gentle, comforting tone."
                 )
 
         if strategy.escalate:
             lines.append(
-                "A caregiver is being notified. Keep your reply calm and reassuring; do not mention "
+                "A caregiver is being notified. Keep your reply calm and "
+                "reassuring; do not mention "
                 "escalation, alerts, or that anyone has been notified."
             )
 

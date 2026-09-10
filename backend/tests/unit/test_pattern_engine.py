@@ -1,6 +1,10 @@
 import datetime as dt
 
-from app.ai.pattern_engine import compute_hourly_distribution, identify_high_risk_windows, is_hour_in_high_risk_window
+from app.ai.pattern_engine import (
+    compute_hourly_distribution,
+    identify_high_risk_windows,
+    is_hour_in_high_risk_window,
+)
 
 
 def _event(hour: int, score: float) -> dict:
@@ -9,7 +13,7 @@ def _event(hour: int, score: float) -> dict:
 
 def test_recurring_evening_window_is_identified():
     events = []
-    for day in range(4):
+    for _day in range(4):
         events.append(_event(18, 80))
         events.append(_event(19, 75))
         events.append(_event(10, 10))

@@ -1,274 +1,187 @@
-import React, { useEffect, useRef } from 'react';
-import { View, Animated, Easing, Text, Platform } from 'react-native';
-import { LinearGradient } from 'expo-linear-gradient';
-import { CompanionState, CompanionUiMode } from '../../types/conversation';
-import { useSettingsStore } from '../../store/settings.store';
+import React, { useEffect, useRef, useId } from "react";
+import {
+  View,
+  Animated,
+  Easing,
+  Platform,
+  AccessibilityInfo,
+} from "react-native";
+import Svg, {
+  Defs,
+  RadialGradient,
+  Stop,
+  Circle,
+  Ellipse,
+  Path,
+} from "react-native-svg";
+import { CompanionState, CompanionUiMode } from "../../types/conversation";
+import { useSettingsStore } from "../../store/settings.store";
 
-const NATIVE_DRIVER = Platform.OS !== 'web';
-
-interface CompanionOrbProps {
+export function CompanionOrb({
+  state,
+  uiMode = "normal",
+  size = 220,
+}: {
   state: CompanionState;
   uiMode?: CompanionUiMode;
   size?: number;
-}
-
-export const CompanionOrb: React.FC<CompanionOrbProps> = ({
-  state,
-  uiMode = 'normal',
-  size = 220,
-}) => {
-  const reducedMotion = useSettingsStore((s) => s.reducedMotion);
-
-  // Animated values
-  const scaleAnim = useRef(new Animated.Value(1)).current;
-  const pulseAnim = useRef(new Animated.Value(1)).current;
-  const waveAnim1 = useRef(new Animated.Value(0.3)).current;
-  const waveAnim2 = useRef(new Animated.Value(0.5)).current;
-  const waveAnim3 = useRef(new Animated.Value(0.7)).current;
-
-  const isComfort = uiMode === 'comfort' || state === 'comfort';
-
-  // Gentle breathing loop for idle & comfort
+}) {
+  const reduced = useSettingsStore((s) => s.reducedMotion);
+  const [systemReduced, setSystemReduced] = React.useState(false);
+  const motion = useRef(new Animated.Value(1)).current;
+  const id = useId().replace(/:/g, "");
+  const comfort = uiMode === "comfort" || state === "comfort",
+    offline = state === "offline" || state === "error";
   useEffect(() => {
-    if (reducedMotion) {
-      scaleAnim.setValue(1);
-      pulseAnim.setValue(1);
-      return;
-    }
-
-    let loop: Animated.CompositeAnimation | null = null;
-
-    if (state === 'idle' || isComfort) {
-      const duration = isComfort ? 3200 : 2600; // Slower and deeper in comfort mode
-      loop = Animated.loop(
-        Animated.sequence([
-          Animated.timing(scaleAnim, {
-            toValue: 1.06,
-            duration,
-            easing: Easing.inOut(Easing.sin),
-            useNativeDriver: NATIVE_DRIVER,
-          }),
-          Animated.timing(scaleAnim, {
-            toValue: 1,
-            duration,
-            easing: Easing.inOut(Easing.sin),
-            useNativeDriver: NATIVE_DRIVER,
-          }),
-        ])
-      );
-      loop.start();
-    } else if (state === 'recording') {
-      // Gentle listening pulse
-      loop = Animated.loop(
-        Animated.sequence([
-          Animated.timing(scaleAnim, {
-            toValue: 1.12,
-            duration: 1200,
-            easing: Easing.inOut(Easing.ease),
-            useNativeDriver: NATIVE_DRIVER,
-          }),
-          Animated.timing(scaleAnim, {
-            toValue: 0.98,
-            duration: 1200,
-            easing: Easing.inOut(Easing.ease),
-            useNativeDriver: NATIVE_DRIVER,
-          }),
-        ])
-      );
-      loop.start();
-    } else if (state === 'processing' || state === 'uploading') {
-      // Soft glowing oscillation
-      loop = Animated.loop(
-        Animated.sequence([
-          Animated.timing(pulseAnim, {
-            toValue: 0.85,
-            duration: 1500,
-            easing: Easing.inOut(Easing.ease),
-            useNativeDriver: NATIVE_DRIVER,
-          }),
-          Animated.timing(pulseAnim, {
-            toValue: 1,
-            duration: 1500,
-            easing: Easing.inOut(Easing.ease),
-            useNativeDriver: NATIVE_DRIVER,
-          }),
-        ])
-      );
-      loop.start();
-    } else if (state === 'speaking') {
-      // Gentle vocal speaking cadence
-      loop = Animated.loop(
-        Animated.sequence([
-          Animated.timing(scaleAnim, {
-            toValue: 1.08,
-            duration: 900,
-            easing: Easing.inOut(Easing.sin),
-            useNativeDriver: NATIVE_DRIVER,
-          }),
-          Animated.timing(scaleAnim, {
-            toValue: 0.97,
-            duration: 900,
-            easing: Easing.inOut(Easing.sin),
-            useNativeDriver: NATIVE_DRIVER,
-          }),
-        ])
-      );
-      loop.start();
-    }
-
-    return () => {
-      if (loop) loop.stop();
-    };
-  }, [state, isComfort, reducedMotion, scaleAnim, pulseAnim]);
-
-  // Subtle waveform simulation for listening state
+    AccessibilityInfo.isReduceMotionEnabled().then(setSystemReduced);
+    const subscription = AccessibilityInfo.addEventListener(
+      "reduceMotionChanged",
+      setSystemReduced,
+    );
+    return () => subscription.remove();
+  }, []);
   useEffect(() => {
-    if (state !== 'recording' || reducedMotion) return;
-
-    const animateWaves = () => {
-      Animated.loop(
-        Animated.parallel([
-          Animated.sequence([
-            Animated.timing(waveAnim1, { toValue: 1, duration: 600, useNativeDriver: NATIVE_DRIVER }),
-            Animated.timing(waveAnim1, { toValue: 0.3, duration: 600, useNativeDriver: NATIVE_DRIVER }),
-          ]),
-          Animated.sequence([
-            Animated.timing(waveAnim2, { toValue: 1, duration: 800, useNativeDriver: NATIVE_DRIVER }),
-            Animated.timing(waveAnim2, { toValue: 0.4, duration: 800, useNativeDriver: NATIVE_DRIVER }),
-          ]),
-          Animated.sequence([
-            Animated.timing(waveAnim3, { toValue: 1, duration: 700, useNativeDriver: NATIVE_DRIVER }),
-            Animated.timing(waveAnim3, { toValue: 0.5, duration: 700, useNativeDriver: NATIVE_DRIVER }),
-          ]),
-        ])
-      ).start();
-    };
-
-    animateWaves();
-  }, [state, reducedMotion, waveAnim1, waveAnim2, waveAnim3]);
-
-  // Gradient colors depending on state
-  const getGradientColors = (): readonly [string, string, ...string[]] => {
-    if (isComfort) {
-      return ['#FDE68A', '#F59E0B', '#D97706']; // Warm amber/peach comfort
-    }
-    if (state === 'recording') {
-      return ['#A7F3D0', '#34D399', '#059669']; // Soft mint green listening
-    }
-    if (state === 'speaking') {
-      return ['#BFDBFE', '#60A5FA', '#2563EB']; // Soft caring blue speaking
-    }
-    if (state === 'processing' || state === 'uploading') {
-      return ['#DDD6FE', '#A78BFA', '#7C3AED']; // Lavender processing
-    }
-    if (state === 'error' || state === 'offline') {
-      return ['#E2E8F0', '#94A3B8', '#64748B']; // Neutral resting slate
-    }
-    // Idle
-    return ['#CCFBF1', '#5EEAD4', '#0D9488']; // Calming soft teal
-  };
-
-  const gradientColors = getGradientColors();
-
+    motion.setValue(1);
+    if (reduced || systemReduced || offline) return;
+    const duration = comfort ? 3800 : state === "speaking" ? 1800 : 2800;
+    const animation = Animated.loop(
+      Animated.sequence([
+        Animated.timing(motion, {
+          toValue: 1.035,
+          duration,
+          easing: Easing.inOut(Easing.sin),
+          useNativeDriver: Platform.OS !== "web",
+        }),
+        Animated.timing(motion, {
+          toValue: 1,
+          duration,
+          easing: Easing.inOut(Easing.sin),
+          useNativeDriver: Platform.OS !== "web",
+        }),
+      ]),
+    );
+    animation.start();
+    return () => animation.stop();
+  }, [state, comfort, offline, reduced, systemReduced, motion]);
+  const color = offline
+    ? "#A7BDC0"
+    : comfort
+      ? "#EACBA4"
+      : state === "processing" || state === "uploading"
+        ? "#B8C6EF"
+        : "#58D4D6";
   return (
     <View
-      accessible={true}
+      accessible
       accessibilityRole="image"
-      accessibilityLabel={`Companion orb, status: ${state}`}
-      className="items-center justify-center"
-      style={{ width: size + 40, height: size + 40 }}
+      accessibilityLabel="Your GeriCare companion"
+      style={{
+        width: size + 28,
+        height: size + 28,
+        alignItems: "center",
+        justifyContent: "center",
+      }}
     >
-      {/* Outer soft ambient aura */}
       <Animated.View
         style={{
-          width: size + 32,
-          height: size + 32,
-          borderRadius: (size + 32) / 2,
-          transform: [{ scale: reducedMotion ? 1 : scaleAnim }],
-          opacity: 0.35,
+          width: size + 28,
+          height: size + 28,
+          transform: [{ scale: motion }],
         }}
-        className={`absolute items-center justify-center ${
-          isComfort ? 'bg-amber-300' : 'bg-teal-200'
-        }`}
-      />
-
-      {/* Middle breathing glow ring */}
-      <Animated.View
-        style={{
-          width: size + 16,
-          height: size + 16,
-          borderRadius: (size + 16) / 2,
-          transform: [{ scale: reducedMotion ? 1 : scaleAnim }],
-          opacity: reducedMotion ? 1 : pulseAnim,
-        }}
-        className={`absolute items-center justify-center ${
-          isComfort ? 'bg-amber-100' : 'bg-teal-100'
-        }`}
-      />
-
-      {/* Main friendly companion orb */}
-      <Animated.View
-        style={{
-          width: size,
-          height: size,
-          borderRadius: size / 2,
-          transform: [{ scale: reducedMotion ? 1 : scaleAnim }],
-          shadowColor: isComfort ? '#D97706' : '#2E7D7A',
-          shadowOffset: { width: 0, height: 8 },
-          shadowOpacity: 0.18,
-          shadowRadius: 20,
-          elevation: 8,
-        }}
-        className="overflow-hidden items-center justify-center"
       >
-        <LinearGradient
-          colors={gradientColors}
-          start={{ x: 0.1, y: 0.1 }}
-          end={{ x: 0.9, y: 0.9 }}
-          style={{ width: size, height: size, borderRadius: size / 2 }}
-          className="items-center justify-center"
-        >
-          {/* Subtle friendly visual presence */}
-          {state === 'recording' ? (
-            // Waveform bars while listening
-            <View className="flex-row items-center space-x-2">
-              <Animated.View
-                style={{
-                  height: 36,
-                  width: 6,
-                  backgroundColor: '#FFFFFF',
-                  borderRadius: 3,
-                  transform: [{ scaleY: waveAnim1 }],
-                }}
-              />
-              <Animated.View
-                style={{
-                  height: 48,
-                  width: 6,
-                  backgroundColor: '#FFFFFF',
-                  borderRadius: 3,
-                  transform: [{ scaleY: waveAnim2 }],
-                }}
-              />
-              <Animated.View
-                style={{
-                  height: 36,
-                  width: 6,
-                  backgroundColor: '#FFFFFF',
-                  borderRadius: 3,
-                  transform: [{ scaleY: waveAnim3 }],
-                }}
-              />
-            </View>
+        <Svg width="100%" height="100%" viewBox="0 0 260 260">
+          <Defs>
+            <RadialGradient id={id} cx="40%" cy="28%" r="75%">
+              <Stop offset="0" stopColor="#FFFFFF" />
+              <Stop offset=".45" stopColor="#E3FFFF" />
+              <Stop offset=".82" stopColor={color} />
+              <Stop offset="1" stopColor={offline ? "#8AA4A9" : "#2EBBBE"} />
+            </RadialGradient>
+          </Defs>
+          <Circle cx="130" cy="124" r="119" fill={color} opacity=".10" />
+          <Circle
+            cx="130"
+            cy="124"
+            r="109"
+            fill="none"
+            stroke={color}
+            strokeWidth="1.4"
+            opacity=".3"
+          />
+          <Ellipse
+            cx="130"
+            cy="238"
+            rx="62"
+            ry="7"
+            fill="#4A8D8A"
+            opacity=".1"
+          />
+          <Circle
+            cx="130"
+            cy="124"
+            r="94"
+            fill={`url(#${id})`}
+            stroke="white"
+            strokeWidth="4"
+          />
+          <Path
+            d="M65 84 Q86 45 124 45"
+            fill="none"
+            stroke="white"
+            strokeWidth="5"
+            strokeLinecap="round"
+            opacity=".85"
+          />
+          <Ellipse
+            cx="83"
+            cy="139"
+            rx="13"
+            ry="8"
+            fill="#F3B6BB"
+            opacity=".58"
+          />
+          <Ellipse
+            cx="177"
+            cy="139"
+            rx="13"
+            ry="8"
+            fill="#F3B6BB"
+            opacity=".58"
+          />
+          {offline ? (
+            <Path
+              d="M91 119 Q99 125 107 119 M153 119 Q161 125 169 119"
+              stroke="#123356"
+              strokeWidth="5"
+              strokeLinecap="round"
+              fill="none"
+            />
           ) : (
-            // Subtle, warm friendly eye curves
-            <View className="flex-row items-center justify-center space-x-6">
-              <View className="w-4 h-4 rounded-full bg-white opacity-85" />
-              <View className="w-4 h-4 rounded-full bg-white opacity-85" />
-            </View>
+            <>
+              <Ellipse cx="99" cy="116" rx="6.5" ry="8.5" fill="#123356" />
+              <Ellipse cx="161" cy="116" rx="6.5" ry="8.5" fill="#123356" />
+              <Circle cx="101" cy="113" r="2" fill="white" />
+              <Circle cx="163" cy="113" r="2" fill="white" />
+            </>
           )}
-        </LinearGradient>
+          {state === "speaking" ? (
+            <Ellipse cx="130" cy="146" rx="10" ry="12" fill="#123356" />
+          ) : (
+            <Path
+              d="M118 142 Q130 155 142 142"
+              fill="none"
+              stroke="#123356"
+              strokeWidth="5"
+              strokeLinecap="round"
+            />
+          )}
+          <Path
+            d="M130 195 C113 183 117 177 123 179 Q130 180 130 185 Q134 176 141 180 C149 188 136 194 130 195"
+            fill="white"
+            opacity=".9"
+          />
+        </Svg>
       </Animated.View>
     </View>
   );
-};
+}

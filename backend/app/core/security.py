@@ -42,9 +42,16 @@ def verify_firebase_id_token(id_token: str) -> dict:
         raise AuthenticationError("Invalid or expired authentication token.") from exc
 
 
+# Excludes characters that are easy to confuse when read off a screen and
+# typed by hand: 0/O, 1/I. A caregiver reading this code aloud or a patient
+# transcribing it should never hit an ambiguous character.
+_PAIRING_CODE_ALPHABET = "".join(
+    c for c in string.ascii_uppercase + string.digits if c not in "0O1I"
+)
+
+
 def generate_pairing_code(length: int = 8) -> str:
-    alphabet = string.ascii_uppercase + string.digits
-    return "".join(secrets.choice(alphabet) for _ in range(length))
+    return "".join(secrets.choice(_PAIRING_CODE_ALPHABET) for _ in range(length))
 
 
 def generate_pairing_pin(length: int = 4) -> str:
@@ -59,7 +66,7 @@ def hash_pairing_code(code: str) -> str:
 
 def issue_patient_tokens(patient_id: str, device_id: str) -> tuple[str, str]:
     settings = get_settings()
-    now = dt.datetime.now(dt.timezone.utc)
+    now = dt.datetime.now(dt.UTC)
 
     access_payload = {
         "sub": device_id,

@@ -1,6 +1,6 @@
-import React from 'react';
-import { View, Text } from 'react-native';
-import { GeriButton } from '../common/GeriButton';
+import React from "react";
+import { View, Text } from "react-native";
+import { GeriButton } from "../common/GeriButton";
 
 interface EmptyStateProps {
   title?: string;
@@ -37,7 +37,11 @@ export const EmptyState: React.FC<EmptyStateProps> = ({
       </Text>
       {actionTitle && onAction && (
         <View className="w-full max-w-xs mt-2">
-          <GeriButton title={actionTitle} onPress={onAction} variant="secondary" />
+          <GeriButton
+            title={actionTitle}
+            onPress={onAction}
+            variant="secondary"
+          />
         </View>
       )}
     </View>

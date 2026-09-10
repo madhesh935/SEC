@@ -1,6 +1,8 @@
 import { z } from "zod";
 
 export const memorySchema = z.object({
+  displayDate: z.string().max(80).optional(),
+  photoUrls: z.array(z.string()).default([]),
   title: z.string().min(1, "Memory title is required"),
   description: z.string().min(1, "Memory story or description is required"),
   category: z.string().min(1, "Category is required"),

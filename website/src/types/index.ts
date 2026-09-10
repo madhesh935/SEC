@@ -30,6 +30,7 @@ export interface EmergencyContact {
 }
 
 export interface Patient {
+  emergencyServicesPhone?: string;
   id: string;
   firstName?: string;
   preferredName?: string;
@@ -62,8 +63,8 @@ export interface Patient {
 }
 
 export interface PatientStatus {
-  currentState?: string;
-  distressScore?: number;
+  currentState?: string | null;
+  distressScore?: number | null;
   interactionsToday?: number;
   repeatedQuestions?: number;
   eveningRisk?: string;
@@ -74,6 +75,8 @@ export interface PatientStatus {
 // Family Member Types
 // ==========================================
 export interface FamilyMember {
+  description?: string;
+  patientVisible?: boolean;
   id: string;
   patientId: string;
   name: string;
@@ -108,6 +111,8 @@ export type MemoryCategory =
   | "OTHER";
 
 export interface Memory {
+  displayDate?: string;
+  photoUrls?: string[];
   id: string;
   patientId: string;
   title: string;
@@ -169,7 +174,7 @@ export interface ConversationEvent {
   intent?: string;
   emotion?: string;
   repetitionCount?: number;
-  distressScore?: number;
+  distressScore?: number | null;
   strategy?: string[];
   createdAt: string;
   aiResponse?: string;
@@ -183,7 +188,7 @@ export interface LiveCompanionStatus {
   intent?: string;
   detectedEmotion?: string;
   repetitionCount?: number;
-  distressScore?: number;
+  distressScore?: number | null;
   retrievedMemory?: string;
   selectedStrategy?: string;
   aiResponse?: string;
@@ -226,8 +231,8 @@ export interface EmotionDistributionItem {
 }
 
 export interface DistressAnalyticsData {
-  currentDistressScore: number;
-  riskLevel: "LOW" | "MODERATE" | "ELEVATED" | "HIGH";
+  currentDistressScore: number | null;
+  riskLevel: "LOW" | "MODERATE" | "ELEVATED" | "HIGH" | null;
   trend: DistressTrendPoint[];
   emotionDistribution: EmotionDistributionItem[];
   highDistressEvents: ConversationEvent[];
@@ -238,7 +243,7 @@ export interface DistressAnalyticsData {
 export interface HourlyPatternItem {
   hour: number;
   label: string;
-  distressScore: number;
+  distressScore: number | null;
   repetitionCount: number;
   isHighRiskWindow: boolean;
 }

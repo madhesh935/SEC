@@ -178,7 +178,7 @@ The portal strictly adheres to real backend data handling:
 1. **Loaded State**: When the backend returns collections or models, they are rendered in typed components.
 2. **Empty State**: When the backend returns an empty array or no active session (e.g. no patients registered, no active alerts, no conversation in progress), supportive, accessible empty cards are displayed (*"No patient profiles have been created yet"*, *"No active conversation right now"*, *"No active alerts"*).
 3. **Error / Unavailable State**: If network drops or the server is unavailable, the UI surfaces *"We couldn't load this information right now"* with clear Retry actions.
-4. **Zero Hardcoding**: Zero dummy patients (Raman, Priya), zero fabricated charts, zero synthetic metrics.
+4. **Zero Hardcoding**: No fabricated patient records, zero fabricated charts, zero synthetic metrics.
 
 ---
 
@@ -199,9 +199,9 @@ The web frontend acts as a responsive, human-centered interaction layer. The AI 
 - **FastAPI Core**: RESTful API handling patient models, consent records, and CRUD operations.
 - **Personal Memory Engine**: RAG vector store indexing family memories and retrieving relevant grounding contexts.
 - **Repetition Engine**: Analyzes conversation transcripts for repetitive questions.
-- **Emotion & Distress Engine**: Observes vocal acoustic tension and flags distress spikes.
+- **Emotion & Distress Engine**: Observes transcript and interaction signals and flags distress spikes.
 - **Stage Guidance**: Caregiver/clinician configured dementia stage (Early, Mid, Late) determining conversational pacing.
-- **ElevenLabs Speech Generation**: Generates soothing synthetic speech based on selected response strategies.
+- **Server Speech**: Validated responses are synthesized on the backend, stored privately, and played by the patient app.
 
 ---
 

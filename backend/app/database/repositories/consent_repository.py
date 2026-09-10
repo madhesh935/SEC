@@ -22,9 +22,9 @@ DEFAULT_CONSENT: dict[str, Any] = {
     "allowEmergencyEscalation": True,
     # Caregiver-website-facing fields. These share the same document (one
     # patient, one consent record) - see ConsentService for the two-way
-    # translation. `photosUsage` and `dataRetentionDays` are stored for the
-    # website's display/forms only; no automated retention/deletion job
-    # currently reads dataRetentionDays, so it is not yet enforced.
+    # translation. `photosUsage` also gates patient media projections.
+    # Retention scheduling is deployment-owned; no automated deletion job
+    # currently reads dataRetentionDays.
     "personalDataCollection": True,
     "memoriesUsage": True,
     "photosUsage": True,

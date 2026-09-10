@@ -14,7 +14,12 @@ from __future__ import annotations
 import httpx
 
 from app.config import get_settings
-from app.core.exceptions import AuthenticationError, ConflictError, ExternalServiceError, ValidationError
+from app.core.exceptions import (
+    AuthenticationError,
+    ConflictError,
+    ExternalServiceError,
+    ValidationError,
+)
 
 _TIMEOUT = httpx.Timeout(connect=5.0, read=15.0, write=5.0, pool=5.0)
 _IDENTITY_TOOLKIT_BASE = "https://identitytoolkit.googleapis.com/v1"
@@ -53,7 +58,9 @@ class IdentityService:
             raise AuthenticationError("Sign-in failed.")
         return id_token
 
-    async def sign_up_with_password(self, email: str, password: str, display_name: str | None = None) -> str:
+    async def sign_up_with_password(
+        self, email: str, password: str, display_name: str | None = None
+    ) -> str:
         """Creates a new Firebase Auth user and returns a Firebase ID token
         for it, so the caller can be signed in immediately after signup.
         Unlike sign-in, signup failures are reported specifically (e.g.
@@ -100,7 +107,11 @@ class IdentityService:
                 await client.post(
                     f"{_IDENTITY_TOOLKIT_BASE}/accounts:update",
                     params={"key": api_key},
-                    json={"idToken": id_token, "displayName": display_name, "returnSecureToken": False},
+                    json={
+                        "idToken": id_token,
+                        "displayName": display_name,
+                        "returnSecureToken": False,
+                    },
                 )
         except httpx.HTTPError:
             pass

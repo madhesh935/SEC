@@ -19,7 +19,8 @@ MAX_VOICE_UPLOAD_BYTES = 15 * 1024 * 1024
 
 
 def validate_voice_upload(content_type: str | None, size: int) -> None:
-    if not content_type or content_type.lower() not in ALLOWED_AUDIO_CONTENT_TYPES:
+    mime = content_type.split(";", 1)[0].strip().lower() if content_type else None
+    if mime not in ALLOWED_AUDIO_CONTENT_TYPES:
         raise ValidationError("Unsupported audio format.")
     if size <= 0:
         raise ValidationError("Audio file is empty.")

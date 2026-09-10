@@ -19,9 +19,13 @@ class FamilyService:
             raise ResourceNotFoundError("Family member was not found.")
         return member
 
-    def create_family_member(self, actor_uid: str, patient_id: str, payload: FamilyCreateRequest) -> dict:
+    def create_family_member(
+        self, actor_uid: str, patient_id: str, payload: FamilyCreateRequest
+    ) -> dict:
         created = self.family_repository.create(patient_id, payload.model_dump(mode="json"))
-        audit_log("family_member_created", actor_uid, patient_id=patient_id, family_id=created["id"])
+        audit_log(
+            "family_member_created", actor_uid, patient_id=patient_id, family_id=created["id"]
+        )
         return created
 
     def update_family_member(
@@ -31,7 +35,9 @@ class FamilyService:
         data = {k: v for k, v in payload.model_dump(mode="json").items() if v is not None}
         if data:
             self.family_repository.update(patient_id, family_id, data)
-            audit_log("family_access_changed", actor_uid, patient_id=patient_id, family_id=family_id)
+            audit_log(
+                "family_access_changed", actor_uid, patient_id=patient_id, family_id=family_id
+            )
         return self.get_family_member(patient_id, family_id)
 
     def delete_family_member(self, actor_uid: str, patient_id: str, family_id: str) -> None:

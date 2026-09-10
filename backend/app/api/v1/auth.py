@@ -13,7 +13,13 @@ from fastapi import APIRouter, Depends, Header
 from app.core.exceptions import AuthenticationError
 from app.core.permissions import require_admin_role
 from app.core.rate_limit import auth_limiter
-from app.core.security import AuthenticatedDevice, AuthenticatedUser, decode_patient_token, issue_patient_tokens, verify_firebase_id_token
+from app.core.security import (
+    AuthenticatedDevice,
+    AuthenticatedUser,
+    decode_patient_token,
+    issue_patient_tokens,
+    verify_firebase_id_token,
+)
 from app.dependencies import get_current_user, get_patient_device_repository, get_patient_repository
 from app.schemas.auth import (
     CaregiverTokenResponse,
@@ -45,7 +51,9 @@ async def login(payload: EmailPasswordLoginRequest) -> CaregiverTokenResponse:
 @router.post("/signup", response_model=CaregiverTokenResponse)
 async def signup(payload: EmailPasswordSignupRequest) -> CaregiverTokenResponse:
     auth_limiter.check(payload.email.lower())
-    id_token = await IdentityService().sign_up_with_password(payload.email, payload.password, payload.name)
+    id_token = await IdentityService().sign_up_with_password(
+        payload.email, payload.password, payload.name
+    )
     decoded = verify_firebase_id_token(id_token)
     profile = AuthService().get_or_create_profile(decoded["uid"], decoded.get("email"))
     return CaregiverTokenResponse(token=id_token, user=UserProfile(**profile))
@@ -80,14 +88,20 @@ async def refresh(
     authorization: str | None = Header(default=None),
 ) -> DeviceRefreshResponse | CaregiverTokenResponse:
     if payload and payload.refreshToken and payload.deviceId:
-        device: AuthenticatedDevice = decode_patient_token(payload.refreshToken, expected_type="refresh")
+        device: AuthenticatedDevice = decode_patient_token(
+            payload.refreshToken, expected_type="refresh"
+        )
         if device.device_id != payload.deviceId:
             raise AuthenticationError("Invalid device session token.")
 
         patient_repo = get_patient_repository()
         device_repo = get_patient_device_repository()
         patient = patient_repo.get(device.patient_id)
-        if not patient or patient.get("archived") or not device_repo.is_bound(device.patient_id, device.device_id):
+        if (
+            not patient
+            or patient.get("archived")
+            or not device_repo.is_bound(device.patient_id, device.device_id)
+        ):
             raise AuthenticationError("Device session is no longer valid.")
 
         access_token, refresh_token = issue_patient_tokens(device.patient_id, device.device_id)

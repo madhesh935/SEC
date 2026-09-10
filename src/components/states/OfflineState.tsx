@@ -1,7 +1,7 @@
-import React from 'react';
-import { View, Text } from 'react-native';
-import { WifiOff } from 'lucide-react-native';
-import { GeriButton } from '../common/GeriButton';
+import React from "react";
+import { View, Text } from "react-native";
+import { WifiOff } from "lucide-react-native";
+import { GeriButton } from "../common/GeriButton";
 
 interface OfflineStateProps {
   onRetry?: () => void;
@@ -51,15 +51,12 @@ export const OfflineState: React.FC<OfflineStateProps> = ({
         You're offline right now.
       </Text>
       <Text className="text-lg text-navy-600 text-center leading-relaxed max-w-sm mb-8">
-        Your companion needs an internet connection to talk. Please check your Wi-Fi or connection.
+        Your companion needs an internet connection to talk. Please check your
+        Wi-Fi or connection.
       </Text>
       {onRetry && (
         <View className="w-full max-w-xs">
-          <GeriButton
-            title="Try Again"
-            onPress={onRetry}
-            variant="primary"
-          />
+          <GeriButton title="Try Again" onPress={onRetry} variant="primary" />
         </View>
       )}
     </View>

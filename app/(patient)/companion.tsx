@@ -1,166 +1,125 @@
-import React from 'react';
-import { View, Text, ScrollView, TouchableOpacity } from 'react-native';
-import { useRouter } from 'expo-router';
-import { Heart, Music, AlertCircle, Sparkles } from 'lucide-react-native';
-import { GeriHeader } from '../../src/components/common/GeriHeader';
-import { CompanionOrb } from '../../src/components/companion/CompanionOrb';
-import { VoiceButton } from '../../src/components/companion/VoiceButton';
-import { GeriCard } from '../../src/components/common/GeriCard';
-import { useCompanionVoice } from '../../src/hooks/useCompanionVoice';
-import { useCompanionStore } from '../../src/store/companion.store';
-import { useNetwork } from '../../src/hooks/useNetwork';
-import { ROUTES } from '../../src/constants/routes';
-
-export default function CompanionScreen() {
-  const router = useRouter();
-  const { isOffline } = useNetwork();
-  const { state, uiMode, transcript, responseText } = useCompanionStore();
-  const {
-    toggleVoice,
-    isRecording,
-    isProcessing,
-    isSpeaking,
-    errorMessage,
-    resetToIdle,
-  } = useCompanionVoice();
-
-  const isComfort = uiMode === 'comfort';
-
-  // Dynamic empathetic label
-  const getPromptLabel = () => {
-    if (isOffline) return "You're offline right now";
-    if (errorMessage) return 'Unable to connect';
-    if (isRecording) return "I'm listening...";
-    if (isProcessing) return 'Just a moment...';
-    if (isSpeaking) return 'Speaking...';
-    if (isComfort) return "You're not alone.";
-    return "Tap when you're ready";
-  };
-
+import React from "react";
+import { View, Pressable } from "react-native";
+import { Mic, Square, Volume2 } from "lucide-react-native";
+import {
+  Screen,
+  Copy,
+  Card,
+  Action,
+  palette,
+} from "../../src/components/patient/Design";
+import { CompanionOrb } from "../../src/components/companion/CompanionOrb";
+import { ContextAction } from "../../src/components/patient/ContextAction";
+import { useCompanionVoice } from "../../src/hooks/useCompanionVoice";
+import { useNetwork } from "../../src/hooks/useNetwork";
+export default function Companion() {
+  const voice = useCompanionVoice(),
+    { isOffline } = useNetwork(),
+    comfort = voice.uiMode === "comfort";
+  const prompt = isOffline
+    ? "We can’t connect right now"
+    : voice.isRecording
+      ? "I’m listening"
+      : voice.isProcessing
+        ? "Just a moment"
+        : voice.isSpeaking
+          ? "I’m here with you"
+          : comfort
+            ? "You’re not alone."
+            : "Tap when you’re ready";
   return (
-    <View className={`flex-1 ${isComfort ? 'bg-comfort-bg' : 'bg-background-warm'}`}>
-      <GeriHeader
-        title="Companion"
-        subtitle={isComfort ? 'Comfort & Calm Mode' : 'Personal voice companion'}
-        onBackPress={() => router.back()}
-      />
-
-      <ScrollView
-        contentContainerStyle={{ flexGrow: 1 }}
-        contentContainerClassName="justify-between items-center"
-        className="px-6 py-4"
-      >
-        {/* Top Status & Reassurance Banner */}
-        <View className="items-center w-full max-w-sm my-2">
-          <View
-            className={`flex-row items-center px-4 py-2 rounded-full border mb-2 ${
-              isComfort
-                ? 'bg-amber-100 border-amber-300'
-                : 'bg-teal-50 border-teal-200'
-            }`}
-          >
-            <Sparkles size={16} color={isComfort ? '#D97706' : '#2E7D7A'} />
-            <Text
-              className={`text-sm font-semibold ml-2 ${
-                isComfort ? 'text-amber-900' : 'text-teal-800'
-              }`}
-            >
-              {isComfort ? 'Comfort mode active' : 'Voice companion ready'}
-            </Text>
-          </View>
-
-          <Text className="text-3xl font-bold text-navy text-center tracking-tight mt-1">
-            {getPromptLabel()}
-          </Text>
-
-          {isComfort && (
-            <Text className="text-lg text-amber-900 text-center mt-2 font-medium">
-              Everything is okay. I am right here with you.
-            </Text>
+    <Screen
+      title="Companion"
+      subtitle="Your personal voice companion"
+      warm={comfort}
+    >
+      <View style={{ alignItems: "center", gap: 18, paddingTop: 12 }}>
+        <Copy
+          size={comfort ? 28 : 25}
+          bold
+          accessibilityLiveRegion="polite"
+          style={{ textAlign: "center" }}
+        >
+          {prompt}
+        </Copy>
+        <CompanionOrb
+          state={isOffline ? "offline" : voice.state}
+          uiMode={voice.uiMode}
+          size={225}
+        />
+        {comfort && (
+          <Copy size={24} style={{ textAlign: "center" }}>
+            I’m here with you.
+          </Copy>
+        )}
+      </View>
+      {voice.response?.responseText && (
+        <Card tone={comfort ? "peach" : "blue"}>
+          <Copy size={comfort ? 26 : 23}>{voice.response.responseText}</Copy>
+        </Card>
+      )}
+      {!!voice.errorMessage && (
+        <Copy accessibilityRole="alert" style={{ color: palette.red }}>
+          {voice.errorMessage}
+        </Copy>
+      )}
+      <View style={{ alignItems: "center", gap: 12 }}>
+        <Pressable
+          disabled={isOffline || voice.isProcessing || voice.isSpeaking}
+          accessibilityRole="button"
+          accessibilityLabel={
+            voice.isRecording ? "Finish speaking" : "Tap to talk"
+          }
+          accessibilityState={{
+            disabled: isOffline || voice.isProcessing || voice.isSpeaking,
+          }}
+          onPress={voice.toggleVoice}
+          style={({ pressed }) => ({
+            width: 100,
+            height: 100,
+            borderRadius: 50,
+            backgroundColor: palette.teal,
+            alignItems: "center",
+            justifyContent: "center",
+            borderWidth: 8,
+            borderColor: "#CCF3EB",
+            opacity: pressed ? 0.8 : isOffline || voice.isProcessing ? 0.5 : 1,
+          })}
+        >
+          {voice.isRecording ? (
+            <Square color="white" size={35} />
+          ) : (
+            <Mic color="white" size={42} />
           )}
-        </View>
-
-        {/* Center Companion Orb */}
-        <View className="items-center my-6">
-          <CompanionOrb state={state} uiMode={uiMode} size={240} />
-        </View>
-
-        {/* Optional Secondary Transcript / Response Bubble (Patient Safe) */}
-        {(responseText || transcript) && (
-          <View className="w-full max-w-md my-2">
-            <GeriCard variant={isComfort ? 'comfort' : 'default'} className="p-4">
-              {transcript && (
-                <Text className="text-xs text-navy-400 uppercase font-bold tracking-wider mb-1">
-                  You said
-                </Text>
-              )}
-              {transcript && (
-                <Text className="text-base text-navy-700 italic mb-2">
-                  "{transcript}"
-                </Text>
-              )}
-              {responseText && (
-                <Text className="text-lg font-medium text-navy leading-relaxed">
-                  {responseText}
-                </Text>
-              )}
-            </GeriCard>
-          </View>
-        )}
-
-        {/* Error Notification */}
-        {errorMessage && (
-          <View className="w-full max-w-md my-2 p-4 bg-amber-50 rounded-2xl border border-amber-300 flex-row items-center justify-between">
-            <View className="flex-row items-center flex-1 mr-2">
-              <AlertCircle size={22} color="#D97706" />
-              <Text className="text-sm font-medium text-amber-900 ml-2">
-                {errorMessage}
-              </Text>
-            </View>
-            <TouchableOpacity
-              onPress={resetToIdle}
-              className="px-3 py-1.5 bg-white border border-amber-300 rounded-xl"
-            >
-              <Text className="text-xs font-bold text-amber-900">Dismiss</Text>
-            </TouchableOpacity>
-          </View>
-        )}
-
-        {/* Bottom Voice Controller */}
-        <View className="w-full items-center my-4">
-          <VoiceButton
-            state={state}
-            uiMode={uiMode}
-            onPress={toggleVoice}
-            disabled={isOffline || isProcessing}
-          />
-        </View>
-
-        {/* Comfort Mode Reassuring Shortcuts */}
-        {isComfort && (
-          <View className="w-full max-w-sm flex-row justify-around mt-2 mb-4">
-            <TouchableOpacity
-              onPress={() => router.push(ROUTES.PATIENT.COMFORT as any)}
-              className="flex-row items-center px-4 py-3 bg-amber-100 rounded-2xl border border-amber-300"
-            >
-              <Music size={20} color="#D97706" />
-              <Text className="text-sm font-bold text-amber-900 ml-2">
-                Play Familiar Music
-              </Text>
-            </TouchableOpacity>
-
-            <TouchableOpacity
-              onPress={() => router.push(ROUTES.PATIENT.FAMILY as any)}
-              className="flex-row items-center px-4 py-3 bg-amber-100 rounded-2xl border border-amber-300"
-            >
-              <Heart size={20} color="#D97706" />
-              <Text className="text-sm font-bold text-amber-900 ml-2">
-                See Family
-              </Text>
-            </TouchableOpacity>
-          </View>
-        )}
-      </ScrollView>
-    </View>
+        </Pressable>
+        <Copy size={20} bold>
+          {voice.isRecording ? "Tap to finish" : "Tap to Talk"}
+        </Copy>
+      </View>
+      {(voice.isRecording || voice.isProcessing || voice.isSpeaking) && (
+        <Action
+          label={voice.isSpeaking ? "Stop Speaking" : "Cancel"}
+          secondary
+          onPress={voice.cancel}
+        />
+      )}
+      {voice.response?.responseAudioUrl && (
+        <Action
+          label="Replay Response"
+          disabled={isOffline || voice.isRecording || voice.isProcessing}
+          secondary
+          icon={<Volume2 color={palette.teal} size={22} />}
+          onPress={voice.replay}
+        />
+      )}
+      {voice.response?.actions.map((action, index) => (
+        <ContextAction key={action.type + index} action={action} />
+      ))}
+      {!comfort && !!voice.response?.transcript && (
+        <Copy size={16} style={{ color: palette.muted }}>
+          You said: {voice.response.transcript}
+        </Copy>
+      )}
+    </Screen>
   );
 }

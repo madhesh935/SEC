@@ -2,7 +2,6 @@ from __future__ import annotations
 
 from fastapi import APIRouter, Depends
 
-from app.core.exceptions import ResourceNotFoundError
 from app.core.security import AuthenticatedUser
 from app.dependencies import (
     PatientAccessContext,
@@ -10,8 +9,14 @@ from app.dependencies import (
     get_current_user,
     get_patient_access_context,
 )
-from app.schemas.family import FamilyCreateRequest, FamilyMember, FamilyMemberPublic, FamilyUpdateRequest
+from app.schemas.family import (
+    FamilyCreateRequest,
+    FamilyMember,
+    FamilyMemberPublic,
+    FamilyUpdateRequest,
+)
 from app.services.family_service import FamilyService
+from app.services.patient_content_service import PatientContentService
 
 router = APIRouter(prefix="/patients/{patient_id}/family", tags=["Family"])
 
@@ -27,28 +32,17 @@ def _to_family_member(member: dict, patient_id: str) -> FamilyMember:
     )
 
 
-def _to_family_member_public(member: dict) -> FamilyMemberPublic:
-    return FamilyMemberPublic(
-        id=member["id"],
-        name=member.get("name", ""),
-        relationship=member.get("relationship"),
-        photoUrl=member.get("photoUrl"),
-        phoneAvailable=bool(member.get("phone")),
-        phoneNumber=member.get("phone"),
-        voiceMessageAvailable=bool(member.get("voiceRecordingUrl")),
-        voiceMessageUrl=member.get("voiceRecordingUrl"),
-    )
-
-
 @router.get("", response_model=None)
 async def list_family(
     context: PatientAccessContext = Depends(get_patient_access_context),
 ) -> list[FamilyMember] | list[FamilyMemberPublic]:
     service = FamilyService()
     if context.is_device:
-        visible = service.family_repository.list_patient_visible(context.patient["id"])
-        return [_to_family_member_public(m) for m in visible]
-    return [_to_family_member(m, context.patient["id"]) for m in service.list_family(context.patient["id"])]
+        return PatientContentService(context.patient).family()
+    return [
+        _to_family_member(m, context.patient["id"])
+        for m in service.list_family(context.patient["id"])
+    ]
 
 
 @router.post("", response_model=FamilyMember)
@@ -71,9 +65,7 @@ async def get_family_member(
     member = service.get_family_member(context.patient["id"], family_id)
 
     if context.is_device:
-        if not member.get("patientVisible"):
-            raise ResourceNotFoundError("Family member was not found.")
-        return _to_family_member_public(member)
+        return PatientContentService(context.patient).family_member(family_id)
 
     return _to_family_member(member, context.patient["id"])
 

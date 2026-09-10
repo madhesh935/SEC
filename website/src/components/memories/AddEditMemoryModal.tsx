@@ -1,6 +1,10 @@
 "use client";
 
 import * as React from "react";
+import { useParams } from "next/navigation";
+import { useQuery } from "@tanstack/react-query";
+import { familyService } from "@/services/family.service";
+import { MediaUploader } from "@/components/media/MediaUploader";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { memorySchema, MemoryFormData } from "@/schemas/memory.schema";
@@ -28,6 +32,13 @@ export function AddEditMemoryModal({
   initialData,
   isLoading = false,
 }: AddEditMemoryModalProps) {
+  const params = useParams();
+  const patientId = params.patientId as string;
+  const family = useQuery({
+    queryKey: ["family-members", patientId],
+    queryFn: () => familyService.getFamilyMembers(patientId),
+    enabled: !!patientId,
+  });
   const {
     register,
     handleSubmit,
@@ -39,6 +50,8 @@ export function AddEditMemoryModal({
     resolver: zodResolver(memorySchema),
     defaultValues: {
       title: "",
+      displayDate: "",
+      photoUrls: [],
       description: "",
       category: "FAMILY",
       sensitivity: "LOW",
@@ -60,6 +73,8 @@ export function AddEditMemoryModal({
   React.useEffect(() => {
     if (initialData) {
       reset({
+        displayDate: initialData.displayDate || "",
+        photoUrls: initialData.photoUrls || [],
         title: initialData.title,
         description: initialData.description || "",
         category: initialData.category || "FAMILY",
@@ -80,6 +95,8 @@ export function AddEditMemoryModal({
     } else {
       reset({
         title: "",
+        displayDate: "",
+        photoUrls: [],
         description: "",
         category: "FAMILY",
         sensitivity: "LOW",
@@ -114,13 +131,16 @@ export function AddEditMemoryModal({
       description="Add verified memories to help the AI Companion ground the patient during confusion or distress."
       maxWidth="xl"
     >
-      <form onSubmit={handleSubmit(handleFormSubmit)} className="space-y-4 pt-1">
+      <form
+        onSubmit={handleSubmit(handleFormSubmit)}
+        className="space-y-4 pt-1"
+      >
         <div>
           <label className="block text-xs font-semibold text-slate-700 uppercase mb-1">
             Memory Title *
           </label>
           <Input
-            placeholder="e.g. 1972 Summer Trip to Lake Tahoe"
+            placeholder="Memory title"
             error={!!errors.title}
             {...register("title")}
           />
@@ -140,7 +160,8 @@ export function AddEditMemoryModal({
               <option value="TRAVEL">Travel & Adventures</option>
               <option value="CHILDHOOD">Childhood & Youth</option>
               <option value="HOBBY">Hobbies & Crafts</option>
-              <option value="MUSIC">Music & Performance</option>
+              <option value="MUSIC">Favourite Music</option>
+              <option value="RELAXING_SOUND">Relaxing Sounds</option>
               <option value="SPECIAL_EVENT">Special Life Events</option>
               <option value="OTHER">Other</option>
             </Select>
@@ -153,7 +174,9 @@ export function AddEditMemoryModal({
             <Select {...register("sensitivity")}>
               <option value="LOW">Low (Safe to mention freely)</option>
               <option value="MEDIUM">Medium (Use with gentle context)</option>
-              <option value="HIGH">High (Guardrail: avoid direct prompt)</option>
+              <option value="HIGH">
+                High (Guardrail: avoid direct prompt)
+              </option>
             </Select>
           </div>
         </div>
@@ -180,10 +203,7 @@ export function AddEditMemoryModal({
             <label className="block text-xs font-semibold text-slate-700 uppercase mb-1">
               Image URL (Optional)
             </label>
-            <Input
-              placeholder="https://..."
-              {...register("imageUrl")}
-            />
+            <Input placeholder="https://..." {...register("imageUrl")} />
           </div>
 
           <div>
@@ -197,6 +217,47 @@ export function AddEditMemoryModal({
           </div>
         </div>
 
+        <label className="block text-sm">
+          Display date (optional, as you want the patient to see it)
+          <Input {...register("displayDate")} />
+        </label>
+        <label className="block text-sm">
+          Audio URL
+          <Input {...register("audioUrl")} />
+        </label>
+        <MediaUploader
+          patientId={patientId}
+          onImageUploaded={(url) => setValue("imageUrl", url)}
+          onAudioUploaded={(url) => setValue("audioUrl", url)}
+        />
+        <p className="text-sm text-slate-600">
+          Approved patient-visible music, sounds, photos and stories also appear
+          in Comfort. Voice recordings require voice consent.
+        </p>
+        <fieldset className="space-y-2">
+          <legend className="text-sm font-semibold">
+            People in this memory
+          </legend>
+          {family.data?.map((person) => (
+            <label key={person.id} className="flex items-center gap-2 text-sm">
+              <input
+                type="checkbox"
+                checked={watch("associatedPeople").includes(person.id)}
+                onChange={(event) =>
+                  setValue(
+                    "associatedPeople",
+                    event.target.checked
+                      ? [...watch("associatedPeople"), person.id]
+                      : watch("associatedPeople").filter(
+                          (id) => id !== person.id,
+                        ),
+                  )
+                }
+              />
+              {person.name}
+            </label>
+          ))}
+        </fieldset>
         {/* Sensitive Memory Controls Component (Step 13) */}
         <MemoryPermissionPanel
           permissions={{

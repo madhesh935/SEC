@@ -47,7 +47,9 @@ def identify_high_risk_windows(
 ) -> list[HighRiskWindow]:
     """Group contiguous hours whose average score exceeds `threshold` and
     which have enough events to be a meaningful (not fabricated) pattern."""
-    qualifying = {p.hour for p in hourly_points if p.averageScore >= threshold and p.eventCount >= min_events}
+    qualifying = {
+        p.hour for p in hourly_points if p.averageScore >= threshold and p.eventCount >= min_events
+    }
     if not qualifying:
         return []
 

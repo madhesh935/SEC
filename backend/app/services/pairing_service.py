@@ -47,22 +47,27 @@ class PairingService:
     def create_pairing_code(self, actor_uid: str, patient_id: str) -> dict:
         self._get_active_patient(patient_id)
         settings = get_settings()
-        code = generate_pairing_code()
-        expires_at = dt.datetime.now(dt.timezone.utc) + dt.timedelta(seconds=settings.pairing_code_ttl_seconds)
-        self.pairing_repository.create(patient_id, hash_pairing_code(code), expires_at)
-        audit_log("pairing_code_created", actor_uid, patient_id=patient_id)
-        return {"pairing_code": code, "expires_at": expires_at.isoformat()}
+        expires_at = dt.datetime.now(dt.UTC) + dt.timedelta(
+            seconds=settings.pairing_code_ttl_seconds
+        )
+        for _ in range(_MAX_PIN_GENERATION_ATTEMPTS):
+            code = generate_pairing_code()
+            if self.pairing_repository.create(patient_id, hash_pairing_code(code), expires_at):
+                audit_log("pairing_code_created", actor_uid, patient_id=patient_id)
+                return {"pairing_code": code, "expires_at": expires_at.isoformat()}
+        raise PairingError("Unable to generate a pairing code right now. Please try again.")
 
     def create_pairing_pin(self, actor_uid: str, patient_id: str) -> dict:
         self._get_active_patient(patient_id)
         settings = get_settings()
-        expires_at = dt.datetime.now(dt.timezone.utc) + dt.timedelta(seconds=settings.pairing_pin_ttl_seconds)
+        expires_at = dt.datetime.now(dt.UTC) + dt.timedelta(
+            seconds=settings.pairing_pin_ttl_seconds
+        )
 
         for _ in range(_MAX_PIN_GENERATION_ATTEMPTS):
             pin = generate_pairing_pin()
             pin_hash = hash_pairing_code(pin)
-            if self.pairing_pin_repository.get_active(pin_hash) is None:
-                self.pairing_pin_repository.create(patient_id, pin_hash, expires_at)
+            if self.pairing_pin_repository.create(patient_id, pin_hash, expires_at):
                 audit_log("pairing_pin_created", actor_uid, patient_id=patient_id)
                 return {"pin": pin, "expires_at": expires_at.isoformat()}
 
@@ -81,7 +86,7 @@ class PairingService:
         return self._bind_and_issue(record["patientId"], device_id)
 
     def _bind_and_issue(self, patient_id: str, device_id: str) -> dict:
-        patient = self.patient_repository.get(patient_id)
+        patient = self._get_active_patient(patient_id)
         self.patient_device_repository.bind(patient_id, device_id)
         access_token, refresh_token = issue_patient_tokens(patient_id, device_id)
         audit_log("device_paired", device_id, patient_id=patient_id)

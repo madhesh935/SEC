@@ -1,8 +1,8 @@
-import { create } from 'zustand';
-import { storage } from '../utils/storage';
-import { CONFIG } from '../constants/config';
+import { create } from "zustand";
+import { storage } from "../utils/storage";
+import { CONFIG } from "../constants/config";
 
-export type TextSizeOption = 'normal' | 'large' | 'extra-large';
+export type TextSizeOption = "normal" | "large" | "extra-large";
 
 interface SettingsState {
   textSize: TextSizeOption;
@@ -21,9 +21,9 @@ interface SettingsState {
 }
 
 export const useSettingsStore = create<SettingsState>((set, get) => ({
-  textSize: 'large',
+  textSize: "large",
   voiceVolume: 0.9,
-  language: 'en',
+  language: "en",
   reducedMotion: false,
   replayVoiceResponse: true,
 

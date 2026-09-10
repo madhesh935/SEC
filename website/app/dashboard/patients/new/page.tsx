@@ -29,6 +29,7 @@ import {
 } from "lucide-react";
 import { cn } from "@/utils/cn";
 import Link from "next/link";
+import { ImageUploader } from "@/components/media/ImageUploader";
 
 const WIZARD_STEPS = [
   { id: 1, name: "Basic Details" },
@@ -307,6 +308,7 @@ export default function CreatePatientPage() {
 
       {/* Main Form Body */}
       <form onSubmit={handleSubmit(onSubmit, onInvalid)}>
+        {currentStep === 9 && <label className="block rounded-xl bg-white p-4 text-sm mb-4">Local emergency services number (optional; confirm for the patient’s location)<Input {...register("emergencyServicesPhone")} /></label>}
         <div className="rounded-2xl border border-slate-200/80 bg-white p-6 sm:p-8 shadow-soft">
           {/* STEP 1: Basic Details */}
           {currentStep === 1 && (
@@ -326,7 +328,7 @@ export default function CreatePatientPage() {
                     First Name *
                   </label>
                   <Input
-                    placeholder="e.g. Eleanor"
+                    placeholder="First name"
                     error={!!errors.firstName}
                     {...register("firstName")}
                   />
@@ -342,7 +344,7 @@ export default function CreatePatientPage() {
                     Preferred Name / Nickname
                   </label>
                   <Input
-                    placeholder="e.g. Ellie or Grandma"
+                    placeholder="Preferred name"
                     {...register("preferredName")}
                   />
                   <p className="text-[11px] text-slate-400 mt-1">
@@ -389,6 +391,7 @@ export default function CreatePatientPage() {
                     placeholder="https://..."
                     {...register("profilePhotoUrl")}
                   />
+                  <ImageUploader onSuccess={url=>setValue("profilePhotoUrl",url)} />
                   <p className="text-[11px] text-slate-400 mt-1">
                     Optional picture displayed on the caregiver portal and companion screens.
                   </p>

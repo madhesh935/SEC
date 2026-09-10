@@ -1,6 +1,6 @@
 """Response Safety Validator.
 
-Runs deterministic checks before TTS/return-to-patient (spec section 39). If
+Runs deterministic checks before returning a response to the patient (spec section 39). If
 a response fails, the orchestrator regenerates once with stricter
 constraints; if it still fails, a predefined generic fallback is used
 instead - never fabricated personal content.
@@ -16,14 +16,28 @@ from app.ai.stage_engine import StagePolicy
 from app.ai.strategy_engine import StrategyDecision
 
 _INTERNAL_METADATA_PATTERNS = [
-    r"distress score", r"risk score", r"interaction risk", r"strategy engine",
-    r"consent", r"embedding", r"vector", r"confidence", r"aiMayMention",
-    r"safety engine", r"llm", r"system prompt",
+    r"distress score",
+    r"risk score",
+    r"interaction risk",
+    r"strategy engine",
+    r"consent",
+    r"embedding",
+    r"vector",
+    r"confidence",
+    r"aiMayMention",
+    r"safety engine",
+    r"llm",
+    r"system prompt",
 ]
 
 _MEDICAL_CLAIM_PATTERNS = [
-    r"you have dementia", r"you have alzheimer", r"diagnos", r"stage of dementia",
-    r"take your medication", r"prescri", r"your condition is",
+    r"you have dementia",
+    r"you have alzheimer",
+    r"diagnos",
+    r"stage of dementia",
+    r"take your medication",
+    r"prescri",
+    r"your condition is",
 ]
 
 _CONFIRMATION_PATTERNS = [

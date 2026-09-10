@@ -67,7 +67,13 @@ class AuthService:
             uid, {"role": UserRole.CAREGIVER.value, "name": name, "avatarUrl": avatar_url}
         )
         audit_log("user_role_bootstrapped", uid, role=UserRole.CAREGIVER.value)
-        return {"uid": uid, "email": email, "role": created["role"], "name": name, "avatarUrl": avatar_url}
+        return {
+            "uid": uid,
+            "email": email,
+            "role": created["role"],
+            "name": name,
+            "avatarUrl": avatar_url,
+        }
 
     def assign_role(self, actor_uid: str, target_uid: str, role: UserRole) -> dict:
         updated = self.user_repository.upsert(target_uid, {"role": role.value})

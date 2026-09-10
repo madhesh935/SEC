@@ -1,7 +1,5 @@
 from __future__ import annotations
 
-import datetime as dt
-
 from fastapi import APIRouter, Depends, Query
 
 from app.core.security import AuthenticatedUser
@@ -11,28 +9,20 @@ from app.dependencies import (
     get_current_user,
     get_patient_access_context,
 )
-from app.schemas.memory import MemoryCreateRequest, MemoryResponse, MemoryUpdateRequest, PatientMemoryPublic
+from app.schemas.memory import (
+    MemoryCreateRequest,
+    MemoryResponse,
+    MemoryUpdateRequest,
+    PatientMemoryPublic,
+)
 from app.services.memory_service import MemoryService
+from app.services.patient_content_service import PatientContentService
 
 router = APIRouter(prefix="/patients/{patient_id}/memories", tags=["Memories"])
 
 
 def _to_memory_response(memory: dict, patient_id: str) -> MemoryResponse:
     return MemoryResponse(**{**memory, "patientId": patient_id})
-
-
-def _to_patient_memory(memory: dict) -> PatientMemoryPublic:
-    created_at = memory.get("createdAt")
-    display_date = created_at.isoformat() if hasattr(created_at, "isoformat") else None
-    return PatientMemoryPublic(
-        id=memory["id"],
-        title=memory.get("title", ""),
-        description=memory.get("description"),
-        imageUrl=memory.get("imageUrl"),
-        audioUrl=memory.get("audioUrl"),
-        associatedPeople=memory.get("associatedPeople", []),
-        displayDate=display_date,
-    )
 
 
 @router.get("", response_model=None)
@@ -44,8 +34,8 @@ async def list_memories(
 ) -> list[MemoryResponse] | list[PatientMemoryPublic]:
     service = MemoryService()
     if context.is_device:
-        visible = service.memory_repository.list_patient_visible(context.patient["id"])
-        return [_to_patient_memory(m) for m in visible]
+        visible = PatientContentService(context.patient).memories()
+        return [m for m in visible if category is None or m.category == category]
 
     memories = service.list_memories(context.patient["id"])
     if category is not None:
@@ -77,11 +67,7 @@ async def get_memory(
     memory = service.get_memory(context.patient["id"], memory_id)
 
     if context.is_device:
-        if not (memory.get("approved") and memory.get("visibleToPatient")):
-            from app.core.exceptions import ResourceNotFoundError
-
-            raise ResourceNotFoundError("Memory was not found.")
-        return _to_patient_memory(memory)
+        return PatientContentService(context.patient).memory(memory_id)
 
     return _to_memory_response(memory, context.patient["id"])
 

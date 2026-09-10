@@ -16,6 +16,7 @@ from app.api.v1 import (
     media,
     memories,
     pairing,
+    patient_experience,
     patients,
     realtime,
 )
@@ -25,6 +26,7 @@ api_router = APIRouter()
 api_router.include_router(auth.router)
 api_router.include_router(pairing.router)
 api_router.include_router(patients.router)
+api_router.include_router(patient_experience.router)
 api_router.include_router(family.router)
 api_router.include_router(memories.router)
 api_router.include_router(consent.router)

@@ -1,15 +1,5 @@
-export interface FamilyMember {
-  id: string;
-  name: string;
-  relationship?: string;
-  photoUrl?: string;
-  phoneAvailable?: boolean;
-  phoneNumber?: string;
-  voiceMessageAvailable?: boolean;
-  voiceMessageUrl?: string;
-  description?: string;
-}
+import { z } from "zod";
+import { familySchema } from "../services/contracts";
+export type FamilyMember = z.infer<typeof familySchema>;
 
-export interface FamilyMembersResponse {
-  family: FamilyMember[];
-}
+export type FamilyMembersResponse = FamilyMember[];

@@ -36,7 +36,9 @@ class MemoryService:
 
     def create_memory(self, actor_uid: str, patient_id: str, payload: MemoryCreateRequest) -> dict:
         data = payload.model_dump(mode="json")
-        embedding = self.embedding_engine.embed_text(self._embedding_text(data["title"], data["description"]))
+        embedding = self.embedding_engine.embed_text(
+            self._embedding_text(data["title"], data["description"])
+        )
         data["embedding"] = [float(x) for x in embedding]
         data["createdBy"] = actor_uid
         created = self.memory_repository.create(patient_id, data)
@@ -61,7 +63,13 @@ class MemoryService:
             data["embedding"] = [float(x) for x in embedding]
 
         sensitive_permission_changed = any(
-            k in data for k in ("aiMayMentionDirectly", "aiMayKnowInternally", "visibleToPatient", "sensitivity")
+            k in data
+            for k in (
+                "aiMayMentionDirectly",
+                "aiMayKnowInternally",
+                "visibleToPatient",
+                "sensitivity",
+            )
         )
         if data:
             self.memory_repository.update(patient_id, memory_id, data)

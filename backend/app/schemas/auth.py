@@ -29,13 +29,13 @@ class PairingPinCreateResponse(BaseModel):
 
 
 class PairingVerifyRequest(BaseModel):
-    pairingCode: str
-    deviceId: str
+    pairingCode: str = Field(pattern=r"^[A-HJ-NP-Z2-9]{8}$")
+    deviceId: str = Field(min_length=8, max_length=128, pattern=r"^[A-Za-z0-9_-]+$")
 
 
 class PairingVerifyPinRequest(BaseModel):
-    pin: str
-    deviceId: str
+    pin: str = Field(pattern=r"^\d{4}$")
+    deviceId: str = Field(min_length=8, max_length=128, pattern=r"^[A-Za-z0-9_-]+$")
 
 
 class PairingVerifyResponse(BaseModel):

@@ -4,8 +4,8 @@ from __future__ import annotations
 
 from typing import Any
 
-from app.database.repositories.base_repository import SubcollectionRepository
 from app.database.firestore import doc_to_dict, safe_call
+from app.database.repositories.base_repository import SubcollectionRepository
 
 
 class MemoryRepository(SubcollectionRepository):

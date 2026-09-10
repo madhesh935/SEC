@@ -1,11 +1,11 @@
-"""Family member records - used for structured fact retrieval (e.g. "who is Priya?")."""
+"""Family member records - used for structured fact retrieval (e.g. "who is my daughter?")."""
 
 from __future__ import annotations
 
 from typing import Any
 
-from app.database.repositories.base_repository import SubcollectionRepository
 from app.database.firestore import doc_to_dict, safe_call
+from app.database.repositories.base_repository import SubcollectionRepository
 
 
 class FamilyRepository(SubcollectionRepository):

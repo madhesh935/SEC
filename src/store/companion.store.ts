@@ -1,5 +1,5 @@
-import { create } from 'zustand';
-import { CompanionState, CompanionUiMode } from '../types/conversation';
+import { create } from "zustand";
+import { CompanionState, CompanionUiMode } from "../types/conversation";
 
 interface CompanionStoreState {
   state: CompanionState;
@@ -26,8 +26,8 @@ interface CompanionStoreState {
 }
 
 export const useCompanionStore = create<CompanionStoreState>((set) => ({
-  state: 'idle',
-  uiMode: 'normal',
+  state: "idle",
+  uiMode: "normal",
   conversationId: null,
   recordingUri: null,
   isPlayingAudio: false,
@@ -44,10 +44,18 @@ export const useCompanionStore = create<CompanionStoreState>((set) => ({
   setTranscript: (transcript) => set({ transcript }),
   setResponseText: (responseText) => set({ responseText }),
   setErrorMessage: (errorMessage) => set({ errorMessage }),
-  setIsOnline: (isOnline) => set({ isOnline, state: !isOnline ? 'offline' : 'idle' }),
+  setIsOnline: (isOnline) =>
+    set((current) => ({
+      isOnline,
+      state: !isOnline
+        ? "offline"
+        : current.state === "offline"
+          ? "idle"
+          : current.state,
+    })),
   resetToIdle: () =>
     set({
-      state: 'idle',
+      state: "idle",
       recordingUri: null,
       isPlayingAudio: false,
       errorMessage: null,

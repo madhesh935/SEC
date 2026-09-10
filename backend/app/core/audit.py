@@ -11,5 +11,9 @@ from app.core.logging import get_logger
 _audit_logger = get_logger("audit")
 
 
-def audit_log(action: str, actor_uid: str, patient_id: str | None = None, **details: object) -> None:
-    _audit_logger.info("audit_event", action=action, actor_uid=actor_uid, patient_id=patient_id, **details)
+def audit_log(
+    action: str, actor_uid: str, patient_id: str | None = None, **details: object
+) -> None:
+    _audit_logger.info(
+        "audit_event", action=action, actor_uid=actor_uid, patient_id=patient_id, **details
+    )

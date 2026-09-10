@@ -194,7 +194,7 @@ export default function PatientLiveCompanionPage() {
                     AI Companion Response & Calming Speech
                   </h3>
                 </div>
-                <span className="text-[11px] text-teal-700 font-medium">ElevenLabs Voice Output</span>
+                <span className="text-[11px] text-teal-700 font-medium">On-Device Voice Output</span>
               </div>
 
               <div className="rounded-xl bg-white p-4 border border-teal-200 shadow-2xs min-h-[90px] flex items-center">
@@ -232,14 +232,14 @@ export default function PatientLiveCompanionPage() {
 
               <div className="flex items-baseline gap-2">
                 <span className="text-3xl font-bold text-slate-900">
-                  {liveStatus.distressScore !== undefined
+                  {liveStatus.distressScore != null
                     ? liveStatus.distressScore
                     : "—"}
                 </span>
                 <span className="text-xs text-slate-400">/ 100</span>
               </div>
 
-              {liveStatus.distressScore !== undefined && (
+              {liveStatus.distressScore != null && (
                 <div className="mt-3 h-2 w-full rounded-full bg-slate-100 overflow-hidden">
                   <div
                     className={cn(

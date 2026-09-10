@@ -52,6 +52,7 @@ export const createPatientFullSchema = createPatientStep1Schema
   .merge(createPatientStep4Schema)
   .extend({
     emergencyContacts: z.array(emergencyContactSchema).default([]),
+    emergencyServicesPhone: z.string().max(30).optional(),
     comfortPreferences: z.string().optional(),
     personalDataConsent: z.boolean().default(true),
     aiConversationConsent: z.boolean().default(true),

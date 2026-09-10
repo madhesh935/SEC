@@ -11,8 +11,10 @@
     }
   },
   "include": [
-    "**/*.ts",
-    "**/*.tsx",
+    "app/**/*.tsx",
+    "src/**/*.ts",
+    "src/**/*.tsx",
     "nativewind-env.d.ts"
-  ]
+  ],
+  "exclude": ["website", "node_modules", "backend"]
 }

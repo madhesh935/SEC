@@ -1,7 +1,7 @@
-import React from 'react';
-import { View, Text, TouchableOpacity } from 'react-native';
-import { useRouter } from 'expo-router';
-import { ChevronLeft } from 'lucide-react-native';
+import React from "react";
+import { View, Text, TouchableOpacity } from "react-native";
+import { useRouter } from "expo-router";
+import { ChevronLeft } from "lucide-react-native";
 
 interface GeriHeaderProps {
   title: string;
@@ -44,7 +44,10 @@ export const GeriHeader: React.FC<GeriHeaderProps> = ({
           </TouchableOpacity>
         )}
         <View className="flex-1">
-          <Text className="text-2xl font-bold text-navy tracking-tight" numberOfLines={1}>
+          <Text
+            className="text-2xl font-bold text-navy tracking-tight"
+            numberOfLines={1}
+          >
             {title}
           </Text>
           {subtitle && (

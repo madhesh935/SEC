@@ -1,6 +1,6 @@
 """Critical safety tests for the full orchestrator pipeline (spec section 71).
 
-All Firebase/LLM/ElevenLabs dependencies are replaced with in-memory fakes -
+All Firebase/LLM/Whisper dependencies are replaced with in-memory fakes -
 this suite must never touch a real external service.
 """
 
@@ -46,7 +46,9 @@ class FakeConversationEventRepository:
     def __init__(self) -> None:
         self.created: list[dict] = []
 
-    def recent_for_conversation(self, patient_id: str, conversation_id: str, limit: int = 6) -> list[dict]:
+    def recent_for_conversation(
+        self, patient_id: str, conversation_id: str, limit: int = 6
+    ) -> list[dict]:
         return []
 
     def create(self, patient_id: str, data: dict) -> dict:
@@ -134,11 +136,6 @@ class FakeSTTService:
         raise AssertionError("STT should not be called for text conversations")
 
 
-class FakeTTSService:
-    async def synthesize(self, text: str, patient_id: str):
-        return None
-
-
 def _patient() -> dict:
     return {
         "id": "patient-1",
@@ -182,7 +179,6 @@ def _build_orchestrator(
         embedding_engine=FakeEmbeddingEngine(),
         llm_service=llm_service,
         stt_service=FakeSTTService(),
-        tts_service=FakeTTSService(),
     )
 
 
@@ -198,31 +194,40 @@ async def test_restricted_memory_is_never_disclosed_even_if_llm_leaks_it():
         "aiMayMentionDirectly": False,
         "useForRedirection": False,
     }
-    consent = {"aiMayUseBiography": True, "aiMayUseMemoryInternally": True, "aiMayMentionMemoryDirectly": False}
-    leaking_llm = FakeLLMService(responses=["Let's talk about a difficult surgery in 1998 that upset the family."])
+    consent = {
+        "aiMayUseBiography": True,
+        "aiMayUseMemoryInternally": True,
+        "aiMayMentionMemoryDirectly": False,
+    }
+    leaking_llm = FakeLLMService(
+        responses=["Let's talk about a difficult surgery in 1998 that upset the family."]
+    )
 
     orchestrator = _build_orchestrator(
         [restricted_memory], consent, leaking_llm, FakeAlertRepository(), FakeNotificationService()
     )
 
-    result = await orchestrator.process_interaction("patient-1", None, text="How are you feeling today?")
+    result = await orchestrator.process_interaction(
+        "patient-1", None, text="How are you feeling today?"
+    )
 
     assert "1998" not in result.responseText
     assert "surgery" not in result.responseText.lower()
 
 
 @pytest.mark.asyncio
-async def test_llm_failure_returns_generic_fallback_without_fabricating_facts():
+async def test_llm_failure_is_reported_without_a_simulated_conversation():
     consent = {"aiMayUseBiography": True, "aiMayUseMemoryInternally": True}
     orchestrator = _build_orchestrator(
-        [], consent, FakeLLMService(always_raise=True), FakeAlertRepository(), FakeNotificationService()
+        [],
+        consent,
+        FakeLLMService(always_raise=True),
+        FakeAlertRepository(),
+        FakeNotificationService(),
     )
 
-    result = await orchestrator.process_interaction("patient-1", None, text="Where is my daughter?")
-
-    assert result.responseText
-    assert "daughter" not in result.responseText.lower()
-    assert result.status == "success"
+    with pytest.raises(LLMServiceError):
+        await orchestrator.process_interaction("patient-1", None, text="Where is my daughter?")
 
 
 @pytest.mark.asyncio
@@ -234,7 +239,9 @@ async def test_emergency_language_creates_urgent_alert_and_notifies_caregiver():
         [], consent, FakeLLMService(), alert_repository, notification_service
     )
 
-    await orchestrator.process_interaction("patient-1", None, text="I fell and I can't breathe, help me.")
+    await orchestrator.process_interaction(
+        "patient-1", None, text="I fell and I can't breathe, help me."
+    )
 
     assert len(alert_repository.created) == 1
     assert alert_repository.created[0]["severity"] == "URGENT"
@@ -246,9 +253,15 @@ async def test_low_distress_calm_interaction_does_not_create_alert():
     consent = {"aiMayUseBiography": True, "aiMayUseMemoryInternally": True}
     alert_repository = FakeAlertRepository()
     orchestrator = _build_orchestrator(
-        [], consent, FakeLLMService(responses=["What a lovely day."]), alert_repository, FakeNotificationService()
+        [],
+        consent,
+        FakeLLMService(responses=["What a lovely day."]),
+        alert_repository,
+        FakeNotificationService(),
     )
 
-    await orchestrator.process_interaction("patient-1", None, text="I had a wonderful cup of tea today.")
+    await orchestrator.process_interaction(
+        "patient-1", None, text="I had a wonderful cup of tea today."
+    )
 
     assert len(alert_repository.created) == 0

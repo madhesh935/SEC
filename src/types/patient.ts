@@ -1,12 +1,5 @@
-export interface Patient {
-  id: string;
-  preferredName?: string;
-  firstName?: string;
-  profilePhotoUrl?: string;
-  preferredLanguage?: string;
-  stageDisplayLabel?: string;
-}
+import { z } from "zod";
+import { patientSchema } from "../services/contracts";
+export type Patient = z.infer<typeof patientSchema>;
 
-export interface PatientProfileResponse {
-  patient: Patient;
-}
+export type PatientProfileResponse = Patient;

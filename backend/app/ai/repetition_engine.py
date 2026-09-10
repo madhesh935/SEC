@@ -2,7 +2,7 @@
 
 Compares the current utterance's embedding against recent patient utterances
 using cosine similarity rather than exact text matching, so "Where is
-Priya?" and "When will my daughter come?" can be recognized as the same
+my daughter?" and "When will my daughter come?" can be recognized as the same
 underlying topic (spec section 28).
 """
 
@@ -41,16 +41,18 @@ def analyze_repetition(
     threshold: float | None = None,
 ) -> RepetitionResult:
     settings = get_settings()
-    similarity_threshold = threshold if threshold is not None else settings.repetition_similarity_threshold
+    similarity_threshold = (
+        threshold if threshold is not None else settings.repetition_similarity_threshold
+    )
 
-    now = dt.datetime.now(dt.timezone.utc)
+    now = dt.datetime.now(dt.UTC)
     window_start = now - dt.timedelta(minutes=time_window_minutes)
 
     matches: list[tuple[str, float]] = []
     for utterance in recent_utterances:
         created_at = utterance.created_at
         if created_at.tzinfo is None:
-            created_at = created_at.replace(tzinfo=dt.timezone.utc)
+            created_at = created_at.replace(tzinfo=dt.UTC)
         if created_at < window_start:
             continue
         similarity = cosine_similarity(current_embedding, np.array(utterance.embedding))

@@ -1,6 +1,7 @@
-import { create } from 'zustand';
-import { SessionData } from '../types/session';
-import { sessionService } from '../services/session.service';
+import { create } from "zustand";
+import { SessionData } from "../types/session";
+import { sessionService } from "../services/session.service";
+import { useCompanionStore } from "./companion.store";
 
 interface SessionStoreState {
   session: SessionData | null;
@@ -28,13 +29,13 @@ export const useSessionStore = create<SessionStoreState>((set) => ({
         isLoading: false,
       });
       return session;
-    } catch {
+    } catch (error) {
       set({
         session: null,
         isAuthenticated: false,
         isLoading: false,
       });
-      return null;
+      throw error;
     }
   },
 
@@ -49,6 +50,16 @@ export const useSessionStore = create<SessionStoreState>((set) => ({
 
   clearSession: async () => {
     await sessionService.clearSession();
+    useCompanionStore.setState({
+      conversationId: null,
+      transcript: null,
+      responseText: null,
+      uiMode: "normal",
+      state: "idle",
+      recordingUri: null,
+      errorMessage: null,
+      isPlayingAudio: false,
+    });
     set({
       session: null,
       isAuthenticated: false,

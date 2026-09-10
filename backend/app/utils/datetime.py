@@ -6,7 +6,7 @@ import datetime as dt
 
 
 def utcnow() -> dt.datetime:
-    return dt.datetime.now(dt.timezone.utc)
+    return dt.datetime.now(dt.UTC)
 
 
 def hours_ago(hours: int) -> dt.datetime:

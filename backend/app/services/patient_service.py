@@ -49,7 +49,9 @@ class PatientService:
         consent_service: ConsentService | None = None,
     ) -> None:
         self.patient_repository = patient_repository or PatientRepository()
-        self.conversation_event_repository = conversation_event_repository or ConversationEventRepository()
+        self.conversation_event_repository = (
+            conversation_event_repository or ConversationEventRepository()
+        )
         self.consent_service = consent_service or ConsentService()
 
     def create_patient(self, caregiver_uid: str, payload: PatientCreateRequest) -> dict:
@@ -81,7 +83,10 @@ class PatientService:
         return _normalize_for_response(created)
 
     def list_for_caregiver(self, caregiver_uid: str) -> list[dict]:
-        return [_normalize_for_response(p) for p in self.patient_repository.list_for_caregiver(caregiver_uid)]
+        return [
+            _normalize_for_response(p)
+            for p in self.patient_repository.list_for_caregiver(caregiver_uid)
+        ]
 
     def get_patient(self, patient_id: str, include_last_interaction: bool = False) -> dict:
         patient = self.patient_repository.get(patient_id)
@@ -97,7 +102,9 @@ class PatientService:
 
         return _normalize_for_response(patient)
 
-    def update_patient(self, actor_uid: str, patient_id: str, payload: PatientUpdateRequest) -> dict:
+    def update_patient(
+        self, actor_uid: str, patient_id: str, payload: PatientUpdateRequest
+    ) -> dict:
         data = {k: v for k, v in payload.model_dump(mode="json").items() if v is not None}
         if "stage" in data:
             data["configuredStage"] = data.pop("stage")

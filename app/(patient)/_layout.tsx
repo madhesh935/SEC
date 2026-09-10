@@ -1,43 +1,33 @@
-import React, { useEffect } from 'react';
-import { View } from 'react-native';
-import { SafeAreaView } from 'react-native-safe-area-context';
-import { Stack, useRouter } from 'expo-router';
-import { BottomNav } from '../../src/components/navigation/BottomNav';
-import { useSessionStore } from '../../src/store/session.store';
-import { ROUTES } from '../../src/constants/routes';
-
+import React, { useEffect } from "react";
+import { View } from "react-native";
+import { SafeAreaView } from "react-native-safe-area-context";
+import { Stack, useRouter } from "expo-router";
+import { BottomNav } from "../../src/components/navigation/BottomNav";
+import { useSessionStore } from "../../src/store/session.store";
+import { palette } from "../../src/components/patient/Design";
+import { usePatientSettings } from "../../src/hooks/usePatient";
+import { useSettingsStore } from "../../src/store/settings.store";
 export default function PatientLayout() {
-  const router = useRouter();
-  const { session, isAuthenticated, isLoading } = useSessionStore();
-
-  // If no session exists, redirect back to onboarding welcome
+  const session = useSessionStore((s) => s.session),
+    router = useRouter();
+  const settings = usePatientSettings();
   useEffect(() => {
-    if (!isLoading && (!session || !isAuthenticated)) {
-      router.replace(ROUTES.ONBOARDING.WELCOME as any);
-    }
-  }, [session, isAuthenticated, isLoading, router]);
-
+    if (settings.data) useSettingsStore.setState(settings.data);
+  }, [settings.data]);
+  useEffect(() => {
+    if (!session) router.replace("/");
+  }, [session, router]);
+  if (!session) return null;
   return (
-    <SafeAreaView className="flex-1 bg-background-warm">
-      <View className="flex-1 bg-background-warm">
+    <SafeAreaView style={{ flex: 1, backgroundColor: palette.ivory }}>
+      <View style={{ flex: 1 }}>
         <Stack
           screenOptions={{
             headerShown: false,
-            contentStyle: { backgroundColor: '#FAF9F6' },
-            animation: 'fade',
+            animation: "none",
+            contentStyle: { backgroundColor: palette.ivory },
           }}
-        >
-          <Stack.Screen name="home" />
-          <Stack.Screen name="companion" />
-          <Stack.Screen name="family" />
-          <Stack.Screen name="family/[id]" />
-          <Stack.Screen name="memories" />
-          <Stack.Screen name="memory/[id]" />
-          <Stack.Screen name="comfort" />
-          <Stack.Screen name="activities" />
-          <Stack.Screen name="help" />
-          <Stack.Screen name="settings" />
-        </Stack>
+        />
       </View>
       <BottomNav />
     </SafeAreaView>

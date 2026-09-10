@@ -8,6 +8,7 @@ python-multipart>=0.0.20
 sentence-transformers>=3.3
 torch>=2.5
 transformers>=4.47
+faster-whisper>=1.0
 scikit-learn>=1.6
 numpy>=1.26
 pandas>=2.2

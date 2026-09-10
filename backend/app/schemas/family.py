@@ -9,6 +9,7 @@ from pydantic import BaseModel, Field
 
 
 class FamilyCreateRequest(BaseModel):
+    description: str | None = Field(default=None, max_length=500)
     name: str = Field(min_length=1, max_length=100)
     relationship: str = Field(min_length=1, max_length=50)
     phone: str | None = None
@@ -20,6 +21,7 @@ class FamilyCreateRequest(BaseModel):
 
 
 class FamilyUpdateRequest(BaseModel):
+    description: str | None = Field(default=None, max_length=500)
     name: str | None = None
     relationship: str | None = None
     phone: str | None = None
@@ -30,6 +32,7 @@ class FamilyUpdateRequest(BaseModel):
 
 
 class FamilyMember(BaseModel):
+    description: str | None = None
     id: str
     patientId: str
     name: str

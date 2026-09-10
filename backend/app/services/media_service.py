@@ -88,7 +88,13 @@ class MediaService:
                 "uploadedBy": actor_uid,
             }
         )
-        audit_log("media_uploaded", actor_uid, patient_id=patient_id, media_id=record["id"], category=upload_type)
+        audit_log(
+            "media_uploaded",
+            actor_uid,
+            patient_id=patient_id,
+            media_id=record["id"],
+            category=upload_type,
+        )
 
         url = signed_url(storage_path, expires_minutes=120)
         return {

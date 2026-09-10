@@ -31,22 +31,40 @@ def test_sensitive_memory_not_allowed_for_ai_when_not_approved():
 
 def test_memory_not_mentionable_when_ai_may_mention_false():
     memory = _memory(aiMayMentionDirectly=False)
-    assert ConsentService.may_mention_memory_directly(memory, _consent(aiMayMentionMemoryDirectly=True)) is False
+    assert (
+        ConsentService.may_mention_memory_directly(
+            memory, _consent(aiMayMentionMemoryDirectly=True)
+        )
+        is False
+    )
 
 
 def test_memory_not_mentionable_when_global_consent_forbids_direct_mention():
     memory = _memory(aiMayMentionDirectly=True)
-    assert ConsentService.may_mention_memory_directly(memory, _consent(aiMayMentionMemoryDirectly=False)) is False
+    assert (
+        ConsentService.may_mention_memory_directly(
+            memory, _consent(aiMayMentionMemoryDirectly=False)
+        )
+        is False
+    )
 
 
 def test_memory_mentionable_only_when_both_flags_allow_it():
     memory = _memory(aiMayMentionDirectly=True)
-    assert ConsentService.may_mention_memory_directly(memory, _consent(aiMayMentionMemoryDirectly=True)) is True
+    assert (
+        ConsentService.may_mention_memory_directly(
+            memory, _consent(aiMayMentionMemoryDirectly=True)
+        )
+        is True
+    )
 
 
 def test_memory_blocked_from_ai_when_global_toggle_disabled():
     memory = _memory()
-    assert ConsentService.is_memory_allowed_for_ai(memory, _consent(aiMayUseMemoryInternally=False)) is False
+    assert (
+        ConsentService.is_memory_allowed_for_ai(memory, _consent(aiMayUseMemoryInternally=False))
+        is False
+    )
 
 
 def test_biography_blocked_when_consent_disabled():

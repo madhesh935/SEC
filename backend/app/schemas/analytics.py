@@ -64,8 +64,8 @@ class StrategyUsageCount(BaseModel):
 
 
 class DistressAnalyticsResponse(BaseModel):
-    currentDistressScore: int
-    riskLevel: Literal["LOW", "MODERATE", "ELEVATED", "HIGH"]
+    currentDistressScore: int | None
+    riskLevel: Literal["LOW", "MODERATE", "ELEVATED", "HIGH"] | None
     trend: list[DistressTrendPoint] = Field(default_factory=list)
     emotionDistribution: list[EmotionDistributionItem] = Field(default_factory=list)
     highDistressEvents: list[ConversationEvent] = Field(default_factory=list)
@@ -76,7 +76,7 @@ class DistressAnalyticsResponse(BaseModel):
 class HourlyPatternItem(BaseModel):
     hour: int
     label: str
-    distressScore: float
+    distressScore: float | None
     repetitionCount: int
     isHighRiskWindow: bool
 

@@ -1,128 +1,73 @@
-import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
-import { useSessionStore } from '../store/session.store';
-import { patientService } from '../services/patient.service';
-import { familyService } from '../services/family.service';
-import { memoryService } from '../services/memory.service';
-import { comfortService } from '../services/comfort.service';
-import { activityService } from '../services/activity.service';
-import { helpService } from '../services/help.service';
+import { useCallback } from "react";
+import { useFocusEffect } from "expo-router";
+import { useQuery, useMutation } from "@tanstack/react-query";
+import { useSessionStore } from "../store/session.store";
+import { patientService } from "../services/patient.service";
+import { familyService } from "../services/family.service";
+import { memoryService } from "../services/memory.service";
+import { comfortService } from "../services/comfort.service";
+import { activityService } from "../services/activity.service";
+import { helpService } from "../services/help.service";
+import { experienceService } from "../services/experience.service";
 
-export function usePatientProfile() {
-  const session = useSessionStore((state) => state.session);
-  const patientId = session?.patientId;
-
-  return useQuery({
-    queryKey: ['patient', patientId],
-    queryFn: () => patientService.getPatientProfile(patientId!),
-    enabled: !!patientId,
-    staleTime: 1000 * 60 * 5, // 5 minutes
-    retry: 2,
+export function usePatientQuery<T>(
+  key: string,
+  fetcher: (patientId: string) => Promise<T>,
+  resource?: string,
+) {
+  const id = useSessionStore((s) => s.session?.patientId);
+  const query = useQuery({
+    queryKey: [key, id, resource],
+    queryFn: () => fetcher(id!),
+    enabled: !!id,
+    staleTime: 30000,
+    retry: 1,
+    refetchInterval: 60000,
   });
+  const { refetch } = query;
+  useFocusEffect(
+    useCallback(() => {
+      if (id) void refetch();
+    }, [id, refetch]),
+  );
+  return query;
 }
-
-export function useFamilyMembers() {
-  const session = useSessionStore((state) => state.session);
-  const patientId = session?.patientId;
-
-  return useQuery({
-    queryKey: ['family', patientId],
-    queryFn: () => familyService.getFamilyMembers(patientId!),
-    enabled: !!patientId,
-    staleTime: 1000 * 60 * 5,
-    retry: 2,
-  });
-}
-
-export function useFamilyMember(familyMemberId?: string) {
-  const session = useSessionStore((state) => state.session);
-  const patientId = session?.patientId;
-
-  return useQuery({
-    queryKey: ['family-member', patientId, familyMemberId],
-    queryFn: () => familyService.getFamilyMember(patientId!, familyMemberId!),
-    enabled: !!patientId && !!familyMemberId,
-    staleTime: 1000 * 60 * 5,
-    retry: 2,
-  });
-}
-
-export function useMemories() {
-  const session = useSessionStore((state) => state.session);
-  const patientId = session?.patientId;
-
-  return useQuery({
-    queryKey: ['memories', patientId],
-    queryFn: () => memoryService.getMemories(patientId!),
-    enabled: !!patientId,
-    staleTime: 1000 * 60 * 5,
-    retry: 2,
-  });
-}
-
-export function useMemory(memoryId?: string) {
-  const session = useSessionStore((state) => state.session);
-  const patientId = session?.patientId;
-
-  return useQuery({
-    queryKey: ['memory', patientId, memoryId],
-    queryFn: () => memoryService.getMemory(patientId!, memoryId!),
-    enabled: !!patientId && !!memoryId,
-    staleTime: 1000 * 60 * 5,
-    retry: 2,
-  });
-}
-
-export function useComfortContent() {
-  const session = useSessionStore((state) => state.session);
-  const patientId = session?.patientId;
-
-  return useQuery({
-    queryKey: ['comfort', patientId],
-    queryFn: () => comfortService.getComfortContent(patientId!),
-    enabled: !!patientId,
-    staleTime: 1000 * 60 * 5,
-    retry: 2,
-  });
-}
-
-export function useRecommendedActivities() {
-  const session = useSessionStore((state) => state.session);
-  const patientId = session?.patientId;
-
-  return useQuery({
-    queryKey: ['activities', patientId],
-    queryFn: () => activityService.getRecommendedActivities(patientId!),
-    enabled: !!patientId,
-    staleTime: 1000 * 60 * 5,
-    retry: 2,
-  });
-}
-
-export function useHelpContacts() {
-  const session = useSessionStore((state) => state.session);
-  const patientId = session?.patientId;
-
-  return useQuery({
-    queryKey: ['help-contacts', patientId],
-    queryFn: () => helpService.getHelpContacts(patientId!),
-    enabled: !!patientId,
-    staleTime: 1000 * 60 * 5,
-    retry: 2,
-  });
-}
-
+export const usePatientProfile = () =>
+  usePatientQuery("patient", patientService.getPatientProfile);
+export const useFamilyMembers = () =>
+  usePatientQuery("family", familyService.getFamilyMembers);
+export const useFamilyMember = (id = "") =>
+  usePatientQuery(
+    "family-member",
+    (pid) => familyService.getFamilyMember(pid, id),
+    id,
+  );
+export const useMemories = () =>
+  usePatientQuery("memories", memoryService.getMemories);
+export const useMemory = (id = "") =>
+  usePatientQuery("memory", (pid) => memoryService.getMemory(pid, id), id);
+export const useComfortContent = () =>
+  usePatientQuery("comfort", comfortService.getComfortContent);
+export const useRecommendedActivities = () =>
+  usePatientQuery("activities", activityService.getRecommendedActivities);
+export const useActivity = (id = "") =>
+  usePatientQuery(
+    "activity",
+    (pid) => activityService.getActivity(pid, id),
+    id,
+  );
+export const useHelpContacts = () =>
+  usePatientQuery("help-contacts", helpService.getHelpContacts);
+export const useRecommendation = () =>
+  usePatientQuery("recommendation", experienceService.recommendation);
+export const usePatientSettings = () =>
+  usePatientQuery("settings", experienceService.settings);
 export function useRequestHelp() {
-  const queryClient = useQueryClient();
-  const session = useSessionStore((state) => state.session);
-  const patientId = session?.patientId;
-
+  const id = useSessionStore((s) => s.session?.patientId);
   return useMutation({
     mutationFn: (reason?: string) => {
-      if (!patientId) throw new Error('No active patient session');
-      return helpService.requestHelp(patientId, reason);
-    },
-    onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ['help-contacts', patientId] });
+      if (!id) throw new Error("No session");
+      return helpService.requestHelp(id, reason);
     },
   });
 }

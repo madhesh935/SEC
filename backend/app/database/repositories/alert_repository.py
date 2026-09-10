@@ -26,7 +26,9 @@ class AlertRepository(SubcollectionRepository):
         docs = safe_call(query.get)
         return [d for d in (doc_to_dict(s) for s in docs) if d is not None]
 
-    def acknowledge(self, patient_id: str, alert_id: str, performed_by: str, note: str | None = None) -> None:
+    def acknowledge(
+        self, patient_id: str, alert_id: str, performed_by: str, note: str | None = None
+    ) -> None:
         # Firestore's ArrayUnion cannot contain a SERVER_TIMESTAMP sentinel
         # inside an array element, so each action-history entry gets a
         # client-generated ISO timestamp instead of the document-level
@@ -43,14 +45,16 @@ class AlertRepository(SubcollectionRepository):
                             "actionType": "ACKNOWLEDGE",
                             "performedBy": performed_by,
                             "note": note,
-                            "timestamp": dt.datetime.now(dt.timezone.utc).isoformat(),
+                            "timestamp": dt.datetime.now(dt.UTC).isoformat(),
                         }
                     ]
                 ),
             },
         )
 
-    def resolve(self, patient_id: str, alert_id: str, performed_by: str, note: str | None = None) -> None:
+    def resolve(
+        self, patient_id: str, alert_id: str, performed_by: str, note: str | None = None
+    ) -> None:
         safe_call(
             self._collection(patient_id).document(alert_id).update,
             {
@@ -63,7 +67,7 @@ class AlertRepository(SubcollectionRepository):
                             "actionType": "RESOLVE",
                             "performedBy": performed_by,
                             "note": note,
-                            "timestamp": dt.datetime.now(dt.timezone.utc).isoformat(),
+                            "timestamp": dt.datetime.now(dt.UTC).isoformat(),
                         }
                     ]
                 ),
