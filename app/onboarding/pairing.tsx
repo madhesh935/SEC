@@ -3,12 +3,12 @@ import {
   View,
   Text,
   TextInput,
-  SafeAreaView,
   ScrollView,
   KeyboardAvoidingView,
   Platform,
   TouchableOpacity,
 } from 'react-native';
+import { SafeAreaView } from 'react-native-safe-area-context';
 import { useRouter } from 'expo-router';
 import { QrCode, KeyRound, Hash, AlertCircle } from 'lucide-react-native';
 import { GeriHeader } from '../../src/components/common/GeriHeader';
@@ -82,7 +82,8 @@ export default function PairingScreen() {
       >
         <ScrollView
           contentContainerStyle={{ flexGrow: 1 }}
-          className="p-6 justify-between"
+          contentContainerClassName="justify-between"
+          className="p-6"
           keyboardShouldPersistTaps="handled"
         >
           <View>

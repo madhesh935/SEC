@@ -1,8 +1,10 @@
 import React, { useEffect, useRef } from 'react';
-import { View, Animated, Easing, Text } from 'react-native';
+import { View, Animated, Easing, Text, Platform } from 'react-native';
 import { LinearGradient } from 'expo-linear-gradient';
 import { CompanionState, CompanionUiMode } from '../../types/conversation';
 import { useSettingsStore } from '../../store/settings.store';
+
+const NATIVE_DRIVER = Platform.OS !== 'web';
 
 interface CompanionOrbProps {
   state: CompanionState;
@@ -44,13 +46,13 @@ export const CompanionOrb: React.FC<CompanionOrbProps> = ({
             toValue: 1.06,
             duration,
             easing: Easing.inOut(Easing.sin),
-            useNativeDriver: true,
+            useNativeDriver: NATIVE_DRIVER,
           }),
           Animated.timing(scaleAnim, {
             toValue: 1,
             duration,
             easing: Easing.inOut(Easing.sin),
-            useNativeDriver: true,
+            useNativeDriver: NATIVE_DRIVER,
           }),
         ])
       );
@@ -63,13 +65,13 @@ export const CompanionOrb: React.FC<CompanionOrbProps> = ({
             toValue: 1.12,
             duration: 1200,
             easing: Easing.inOut(Easing.ease),
-            useNativeDriver: true,
+            useNativeDriver: NATIVE_DRIVER,
           }),
           Animated.timing(scaleAnim, {
             toValue: 0.98,
             duration: 1200,
             easing: Easing.inOut(Easing.ease),
-            useNativeDriver: true,
+            useNativeDriver: NATIVE_DRIVER,
           }),
         ])
       );
@@ -82,13 +84,13 @@ export const CompanionOrb: React.FC<CompanionOrbProps> = ({
             toValue: 0.85,
             duration: 1500,
             easing: Easing.inOut(Easing.ease),
-            useNativeDriver: true,
+            useNativeDriver: NATIVE_DRIVER,
           }),
           Animated.timing(pulseAnim, {
             toValue: 1,
             duration: 1500,
             easing: Easing.inOut(Easing.ease),
-            useNativeDriver: true,
+            useNativeDriver: NATIVE_DRIVER,
           }),
         ])
       );
@@ -101,13 +103,13 @@ export const CompanionOrb: React.FC<CompanionOrbProps> = ({
             toValue: 1.08,
             duration: 900,
             easing: Easing.inOut(Easing.sin),
-            useNativeDriver: true,
+            useNativeDriver: NATIVE_DRIVER,
           }),
           Animated.timing(scaleAnim, {
             toValue: 0.97,
             duration: 900,
             easing: Easing.inOut(Easing.sin),
-            useNativeDriver: true,
+            useNativeDriver: NATIVE_DRIVER,
           }),
         ])
       );
@@ -127,16 +129,16 @@ export const CompanionOrb: React.FC<CompanionOrbProps> = ({
       Animated.loop(
         Animated.parallel([
           Animated.sequence([
-            Animated.timing(waveAnim1, { toValue: 1, duration: 600, useNativeDriver: true }),
-            Animated.timing(waveAnim1, { toValue: 0.3, duration: 600, useNativeDriver: true }),
+            Animated.timing(waveAnim1, { toValue: 1, duration: 600, useNativeDriver: NATIVE_DRIVER }),
+            Animated.timing(waveAnim1, { toValue: 0.3, duration: 600, useNativeDriver: NATIVE_DRIVER }),
           ]),
           Animated.sequence([
-            Animated.timing(waveAnim2, { toValue: 1, duration: 800, useNativeDriver: true }),
-            Animated.timing(waveAnim2, { toValue: 0.4, duration: 800, useNativeDriver: true }),
+            Animated.timing(waveAnim2, { toValue: 1, duration: 800, useNativeDriver: NATIVE_DRIVER }),
+            Animated.timing(waveAnim2, { toValue: 0.4, duration: 800, useNativeDriver: NATIVE_DRIVER }),
           ]),
           Animated.sequence([
-            Animated.timing(waveAnim3, { toValue: 1, duration: 700, useNativeDriver: true }),
-            Animated.timing(waveAnim3, { toValue: 0.5, duration: 700, useNativeDriver: true }),
+            Animated.timing(waveAnim3, { toValue: 1, duration: 700, useNativeDriver: NATIVE_DRIVER }),
+            Animated.timing(waveAnim3, { toValue: 0.5, duration: 700, useNativeDriver: NATIVE_DRIVER }),
           ]),
         ])
       ).start();

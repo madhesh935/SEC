@@ -43,7 +43,8 @@ export default function SettingsScreen() {
 
       <ScrollView
         contentContainerStyle={{ flexGrow: 1 }}
-        className="p-6 justify-between"
+        contentContainerClassName="justify-between"
+        className="p-6"
       >
         <View>
           {/* Section 1: Text Size */}

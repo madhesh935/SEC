@@ -18,32 +18,32 @@ export const BottomNav: React.FC = () => {
     {
       route: ROUTES.PATIENT.HOME,
       label: 'Home',
-      icon: (active) => <Home size={26} color={active ? '#2E7D7A' : '#64748B'} />,
+      icon: (active) => <Home size={22} color={active ? '#2E7D7A' : '#64748B'} />,
     },
     {
       route: ROUTES.PATIENT.COMPANION,
       label: 'Companion',
-      icon: (active) => <Sparkles size={26} color={active ? '#2E7D7A' : '#64748B'} />,
+      icon: (active) => <Sparkles size={22} color={active ? '#2E7D7A' : '#64748B'} />,
     },
     {
       route: ROUTES.PATIENT.FAMILY,
       label: 'Family',
-      icon: (active) => <Heart size={26} color={active ? '#2E7D7A' : '#64748B'} />,
+      icon: (active) => <Heart size={22} color={active ? '#2E7D7A' : '#64748B'} />,
     },
     {
       route: ROUTES.PATIENT.MEMORIES,
       label: 'Memories',
-      icon: (active) => <ImageIcon size={26} color={active ? '#2E7D7A' : '#64748B'} />,
+      icon: (active) => <ImageIcon size={22} color={active ? '#2E7D7A' : '#64748B'} />,
     },
     {
       route: ROUTES.PATIENT.COMFORT,
       label: 'Comfort',
-      icon: (active) => <Music size={26} color={active ? '#2E7D7A' : '#64748B'} />,
+      icon: (active) => <Music size={22} color={active ? '#2E7D7A' : '#64748B'} />,
     },
     {
       route: ROUTES.PATIENT.HELP,
       label: 'Help',
-      icon: (active) => <LifeBuoy size={26} color={active ? '#C62828' : '#64748B'} />,
+      icon: (active) => <LifeBuoy size={22} color={active ? '#C62828' : '#64748B'} />,
     },
   ];
 
@@ -51,7 +51,7 @@ export const BottomNav: React.FC = () => {
     <View
       accessible={true}
       accessibilityRole="tablist"
-      className="flex-row items-center justify-around bg-white border-t border-navy-200 px-2 py-2 min-h-[64px]"
+      className="flex-row items-stretch bg-white border-t border-navy-200 px-1 py-2 min-h-[64px]"
       style={{
         shadowColor: '#000',
         shadowOffset: { width: 0, height: -2 },
@@ -70,13 +70,16 @@ export const BottomNav: React.FC = () => {
             accessibilityRole="tab"
             accessibilityState={{ selected: isActive }}
             accessibilityLabel={`${item.label} tab`}
-            className={`items-center justify-center py-1 px-2 rounded-xl min-w-[54px] min-h-[50px] ${
+            className={`flex-1 items-center justify-center py-1 px-0.5 rounded-xl min-h-[50px] ${
               isActive ? 'bg-teal-50' : 'bg-transparent'
             }`}
           >
             {item.icon(isActive)}
             <Text
-              className={`text-xs font-semibold mt-1 ${
+              numberOfLines={1}
+              adjustsFontSizeToFit
+              minimumFontScale={0.8}
+              className={`text-2xs font-semibold mt-1 ${
                 isActive ? 'text-teal-700' : 'text-navy-500'
               }`}
             >

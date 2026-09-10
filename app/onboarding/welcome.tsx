@@ -1,5 +1,6 @@
 import React from 'react';
-import { View, Text, SafeAreaView, ScrollView } from 'react-native';
+import { View, Text, ScrollView } from 'react-native';
+import { SafeAreaView } from 'react-native-safe-area-context';
 import { useRouter } from 'expo-router';
 import { Heart, Sparkles, ShieldCheck } from 'lucide-react-native';
 import { GeriButton } from '../../src/components/common/GeriButton';
@@ -12,7 +13,8 @@ export default function WelcomeScreen() {
     <SafeAreaView className="flex-1 bg-background-warm">
       <ScrollView
         contentContainerStyle={{ flexGrow: 1 }}
-        className="px-6 py-8 justify-between"
+        contentContainerClassName="justify-between"
+        className="px-6 py-8"
       >
         {/* Top Branding Section */}
         <View className="items-center mt-6">

@@ -47,7 +47,8 @@ export default function CompanionScreen() {
 
       <ScrollView
         contentContainerStyle={{ flexGrow: 1 }}
-        className="px-6 py-4 justify-between items-center"
+        contentContainerClassName="justify-between items-center"
+        className="px-6 py-4"
       >
         {/* Top Status & Reassurance Banner */}
         <View className="items-center w-full max-w-sm my-2">

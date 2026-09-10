@@ -1,6 +1,8 @@
 import React, { useEffect, useRef } from 'react';
-import { View, Text, Animated, Easing } from 'react-native';
+import { View, Text, Animated, Easing, Platform } from 'react-native';
 import { useSettingsStore } from '../../store/settings.store';
+
+const NATIVE_DRIVER = Platform.OS !== 'web';
 
 interface LoadingStateProps {
   message?: string;
@@ -23,13 +25,13 @@ export const LoadingState: React.FC<LoadingStateProps> = ({
           toValue: 1.15,
           duration: 1400,
           easing: Easing.inOut(Easing.ease),
-          useNativeDriver: true,
+          useNativeDriver: NATIVE_DRIVER,
         }),
         Animated.timing(pulseAnim, {
           toValue: 1,
           duration: 1400,
           easing: Easing.inOut(Easing.ease),
-          useNativeDriver: true,
+          useNativeDriver: NATIVE_DRIVER,
         }),
       ])
     );

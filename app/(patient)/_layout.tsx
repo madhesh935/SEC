@@ -1,5 +1,6 @@
 import React, { useEffect } from 'react';
-import { View, SafeAreaView } from 'react-native';
+import { View } from 'react-native';
+import { SafeAreaView } from 'react-native-safe-area-context';
 import { Stack, useRouter } from 'expo-router';
 import { BottomNav } from '../../src/components/navigation/BottomNav';
 import { useSessionStore } from '../../src/store/session.store';
