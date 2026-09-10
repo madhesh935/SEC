@@ -1,0 +1,97 @@
+/** @type {import('tailwindcss').Config} */
+module.exports = {
+  content: [
+    "./app/**/*.{js,jsx,ts,tsx}",
+    "./src/**/*.{js,jsx,ts,tsx}",
+  ],
+  presets: [require("nativewind/preset")],
+  theme: {
+    extend: {
+      colors: {
+        background: {
+          warm: "#FAF9F6",
+          mint: "#E8F5E9",
+          lavender: "#EDE7F6",
+          blue: "#E3F2FD",
+          card: "#FFFFFF",
+        },
+        teal: {
+          50: "#F0FDF4",
+          100: "#E0F2F1",
+          200: "#B2DFDB",
+          500: "#3B8E88",
+          600: "#2E7D7A",
+          700: "#246663",
+          800: "#1A4D4A",
+        },
+        mint: {
+          50: "#F4FAF6",
+          100: "#E8F5E9",
+          200: "#C8E6C9",
+          300: "#A3E4D7",
+          400: "#81C784",
+          500: "#4CAF50",
+        },
+        softblue: {
+          50: "#F0F8FF",
+          100: "#E3F2FD",
+          200: "#BBDEFB",
+          300: "#90CAF9",
+          400: "#6BA4B8",
+          500: "#4A90E2",
+        },
+        lavender: {
+          50: "#F8F5FC",
+          100: "#EDE7F6",
+          200: "#D1C4E9",
+          300: "#B39DDB",
+          400: "#9575CD",
+        },
+        navy: {
+          DEFAULT: "#0F172A",
+          50: "#F8FAFC",
+          100: "#F1F5F9",
+          200: "#E2E8F0",
+          400: "#94A3B8",
+          500: "#64748B",
+          600: "#475569",
+          700: "#334155",
+          800: "#1E293B",
+          900: "#0F172A",
+        },
+        comfort: {
+          bg: "#FFF9F2",
+          card: "#FFF4E6",
+          accent: "#D97736",
+        },
+      },
+      fontSize: {
+        '2xs': ['11px', '14px'],
+        'xs': ['13px', '18px'],
+        'sm': ['15px', '22px'],
+        'base': ['17px', '26px'],
+        'lg': ['20px', '28px'],
+        'xl': ['24px', '32px'],
+        '2xl': ['28px', '36px'],
+        '3xl': ['34px', '42px'],
+        '4xl': ['40px', '48px'],
+      },
+      borderRadius: {
+        'lg': '14px',
+        'xl': '18px',
+        '2xl': '24px',
+        '3xl': '32px',
+        'full': '9999px',
+      },
+      minHeight: {
+        'touch': '56px',
+        'touch-lg': '68px',
+      },
+      minWidth: {
+        'touch': '56px',
+        'touch-lg': '68px',
+      },
+    },
+  },
+  plugins: [],
+};

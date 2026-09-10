@@ -1,25 +1,47 @@
 {
   "expo": {
-    "name": "sec",
-    "slug": "sec",
+    "name": "GeriCare AI",
+    "slug": "gericare-ai",
     "version": "1.0.0",
-    "orientation": "portrait",
-    "icon": "./assets/icon.png",
+    "orientation": "default",
+    "scheme": "gericare",
     "userInterfaceStyle": "light",
     "ios": {
-      "supportsTablet": true
+      "supportsTablet": true,
+      "bundleIdentifier": "com.gericare.app",
+      "infoPlist": {
+        "NSMicrophoneUsageDescription": "GeriCare AI uses the microphone for your voice companion conversations."
+      }
     },
     "android": {
-      "adaptiveIcon": {
-        "backgroundColor": "#E6F4FE",
-        "foregroundImage": "./assets/android-icon-foreground.png",
-        "backgroundImage": "./assets/android-icon-background.png",
-        "monochromeImage": "./assets/android-icon-monochrome.png"
-      },
-      "predictiveBackGestureEnabled": false
+      "package": "com.gericare.app",
+      "permissions": [
+        "RECORD_AUDIO",
+        "ACCESS_NETWORK_STATE"
+      ]
     },
     "web": {
-      "favicon": "./assets/favicon.png"
-    }
+      "bundler": "metro"
+    },
+    "plugins": [
+      "expo-router",
+      "expo-secure-store",
+      [
+        "expo-audio",
+        {
+          "microphonePermission": "GeriCare AI uses the microphone for voice conversations with your companion."
+        }
+      ],
+      [
+        "expo-splash-screen",
+        {
+          "backgroundColor": "#FAF9F6",
+          "image": "./assets/splash-icon.png",
+          "imageWidth": 200,
+          "resizeMode": "contain"
+        }
+      ],
+      "expo-asset"
+    ]
   }
 }
