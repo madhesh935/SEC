@@ -10,6 +10,9 @@ from pydantic import BaseModel
 
 
 class ConsentSettings(BaseModel):
+    biographyUsage: bool = True
+    aiMayMentionMemoryDirectly: bool = False
+    patientMaySeeMemory: bool = True
     patientId: str
     personalDataCollection: bool = True
     memoriesUsage: bool = True
@@ -24,6 +27,9 @@ class ConsentSettings(BaseModel):
 
 
 class ConsentUpdateRequest(BaseModel):
+    biographyUsage: bool | None = None
+    aiMayMentionMemoryDirectly: bool | None = None
+    patientMaySeeMemory: bool | None = None
     personalDataCollection: bool | None = None
     memoriesUsage: bool | None = None
     photosUsage: bool | None = None

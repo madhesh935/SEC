@@ -2,10 +2,10 @@
 
 import * as React from "react";
 import { useParams } from "next/navigation";
+import { usePatientStore } from "@/store/patient.store";
 import { usePatientQuery, usePatientLiveStatusQuery } from "@/hooks/usePatients";
 import { useLiveCompanion } from "@/hooks/useRealtime";
 import { PageHeader } from "@/components/layout/PageHeader";
-import { PatientAvatar } from "@/components/patient/PatientAvatar";
 import { LoadingState } from "@/components/states/LoadingState";
 import { ErrorState } from "@/components/states/ErrorState";
 import { Button } from "@/components/ui/button";
@@ -13,12 +13,9 @@ import {
   Radio,
   Sparkles,
   HeartPulse,
-  Repeat,
   ShieldCheck,
-  Volume2,
   BookOpen,
   MessageSquare,
-  Activity,
   Wifi,
 } from "lucide-react";
 import { getStageBadgeInfo } from "@/utils/formatters";
@@ -27,7 +24,8 @@ import { cn } from "@/utils/cn";
 
 export default function PatientLiveCompanionPage() {
   const params = useParams();
-  const patientId = params.patientId as string;
+  const selectedId = usePatientStore(s => s.selectedPatientId);
+  const patientId = (params.patientId as string) || selectedId || "";
 
   const {
     data: patient,
@@ -38,13 +36,12 @@ export default function PatientLiveCompanionPage() {
   // Polling query fallback for live status
   const {
     data: polledLiveStatus,
-    isLoading: isStatusLoading,
     isError: isStatusError,
     refetch,
   } = usePatientLiveStatusQuery(patientId);
 
   // Real-time WebSocket/Firestore listener hook
-  const { liveStatus: socketLiveStatus, isConnected } = useLiveCompanion(patientId);
+  const { liveStatus: socketLiveStatus } = useLiveCompanion(patientId);
 
   // Merge: prefer real-time socket payload if available, else polled status
   const liveStatus = socketLiveStatus || polledLiveStatus;
@@ -307,3 +304,4 @@ export default function PatientLiveCompanionPage() {
     </div>
   );
 }
+

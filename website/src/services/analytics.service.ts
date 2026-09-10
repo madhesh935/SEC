@@ -62,7 +62,7 @@ export const analyticsService = {
    */
   async getDistressTrend(
     patientId: string,
-    range: "today" | "7d" | "30d" = "today"
+    range: "today" | "7d" | "14d" | "30d" = "today"
   ): Promise<DistressTrendPoint[]> {
     const response = await apiClient.get<DistressTrendPoint[]>(
       `/api/v1/patients/${patientId}/analytics/distress-trend`,

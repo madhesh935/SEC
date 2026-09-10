@@ -77,6 +77,9 @@ class ConsentService:
         second source of truth."""
         return {
             "patientId": patient_id,
+            "biographyUsage": bool(consent.get("aiMayUseBiography", True)),
+            "aiMayMentionMemoryDirectly": bool(consent.get("aiMayMentionMemoryDirectly", False)),
+            "patientMaySeeMemory": bool(consent.get("patientMaySeeMemory", True)),
             "personalDataCollection": bool(consent.get("personalDataCollection", True)),
             "memoriesUsage": bool(
                 consent.get("memoriesUsage", consent.get("aiMayUseMemoryInternally", True))
@@ -117,4 +120,11 @@ class ConsentService:
             mapped["allowEmergencyEscalation"] = data["emergencyEscalationEnabled"]
         if "dataRetentionDays" in data:
             mapped["dataRetentionDays"] = data["dataRetentionDays"]
+        for key, target in [
+            ("biographyUsage", "aiMayUseBiography"),
+            ("aiMayMentionMemoryDirectly", "aiMayMentionMemoryDirectly"),
+            ("patientMaySeeMemory", "patientMaySeeMemory"),
+        ]:
+            if key in data:
+                mapped[target] = data[key]
         return mapped

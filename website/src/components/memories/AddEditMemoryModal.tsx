@@ -1,8 +1,10 @@
 "use client";
 
 import * as React from "react";
-import { useParams } from "next/navigation";
-import { useQuery } from "@tanstack/react-query";
+import { useParams } from "next/navigation";
+import { usePatientStore } from "@/store/patient.store";
+import { useQuery } from "@tanstack/react-query";
+import { portalService } from "@/services/portal.service";
 import { familyService } from "@/services/family.service";
 import { MediaUploader } from "@/components/media/MediaUploader";
 import { useForm } from "react-hook-form";
@@ -33,7 +35,9 @@ export function AddEditMemoryModal({
   isLoading = false,
 }: AddEditMemoryModalProps) {
   const params = useParams();
-  const patientId = params.patientId as string;
+  const selectedId = usePatientStore(s => s.selectedPatientId);
+  const patientId = (params.patientId as string) || selectedId || "";
+  const grants = useQuery({queryKey:["family-access",patientId],queryFn:()=>portalService.grants(patientId),enabled:!!patientId});
   const family = useQuery({
     queryKey: ["family-members", patientId],
     queryFn: () => familyService.getFamilyMembers(patientId),
@@ -66,7 +70,8 @@ export function AddEditMemoryModal({
       visibleToPatient: false,
       visibleToCaregiver: true,
       visibleToSelectedFamily: false,
-      associatedPeople: [],
+      associatedPeople: [],
+      familyUserIds: [],
     },
   });
 
@@ -90,7 +95,8 @@ export function AddEditMemoryModal({
         visibleToPatient: initialData.visibleToPatient ?? false,
         visibleToCaregiver: initialData.visibleToCaregiver ?? true,
         visibleToSelectedFamily: initialData.visibleToSelectedFamily ?? false,
-        associatedPeople: initialData.associatedPeople || [],
+        associatedPeople: initialData.associatedPeople || [],
+        familyUserIds: initialData.familyUserIds || [],
       });
     } else {
       reset({
@@ -111,7 +117,8 @@ export function AddEditMemoryModal({
         visibleToPatient: false,
         visibleToCaregiver: true,
         visibleToSelectedFamily: false,
-        associatedPeople: [],
+        associatedPeople: [],
+      familyUserIds: [],
       });
     }
   }, [initialData, reset]);
@@ -259,6 +266,7 @@ export function AddEditMemoryModal({
           ))}
         </fieldset>
         {/* Sensitive Memory Controls Component (Step 13) */}
+        {watch("visibleToSelectedFamily") && <fieldset className="rounded-xl border p-4"><legend>Family accounts who can see this memory</legend>{grants.isPending ? <p>Loading family accounts…</p> : grants.isError ? <button type="button" onClick={() => void grants.refetch()}>Retry family access</button> : grants.data?.filter(g=>g.status==="active").map(g=><label key={g.userId} className="gc-check"><input type="checkbox" checked={watch("familyUserIds").includes(g.userId)} onChange={e=>setValue("familyUserIds",e.target.checked?[...watch("familyUserIds"),g.userId]:watch("familyUserIds").filter(id=>id!==g.userId))}/>{g.email || g.relationship}</label>)}{grants.data?.length===0 && <p>No family accounts have joined yet. Invite someone from Patient ? Privacy.</p>}</fieldset>}
         <MemoryPermissionPanel
           permissions={{
             aiMayKnowInternally: watch("aiMayKnowInternally"),
@@ -299,3 +307,5 @@ export function AddEditMemoryModal({
     </Modal>
   );
 }
+
+

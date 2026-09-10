@@ -120,7 +120,7 @@ def api(monkeypatch):
     monkeypatch.setattr(
         PairingRepository,
         "create",
-        lambda _, pid, hashed, expiry: (
+        lambda _, pid, hashed, expiry, issuer=None: (
             codes.update({hashed: {"patientId": pid, "expiresAt": expiry, "used": False}}) or True
         ),
     )
@@ -638,3 +638,191 @@ def test_consent_blocks_voice_before_transcription(api):
     )
     assert response.json()["status"] == "ai_disabled"
     SpeechToTextService.transcribe.assert_not_awaited()
+
+
+# Web portals: exercise real service projections and permission enforcement.
+def grant_family(api, permissions=None):
+    from app.database.repositories.portal_repository import AccessRepository
+
+    return AccessRepository().create(
+        api["pid"],
+        {
+            "userId": "family",
+            "patientId": api["pid"],
+            "email": "relative@example.test",
+            "relationship": "Relative",
+            "status": "active",
+            "permissions": permissions
+            or [
+                "viewProfile",
+                "viewMemories",
+                "contributeMemory",
+                "uploadPhoto",
+                "uploadVoice",
+                "viewUpdates",
+            ],
+        },
+        doc_id="family",
+    )
+
+
+@pytest.mark.parametrize(
+    "suffix",
+    [
+        "",
+        "/family",
+        "/memories",
+        "/status",
+        "/events",
+        "/live-status",
+        "/analytics/repetition",
+        "/analytics/distress",
+        "/consent",
+        "/devices",
+        "/dashboard",
+        "/activity-management",
+        "/family-access",
+    ],
+)
+def test_family_cannot_read_caregiver_contracts(api, suffix):
+    grant_family(api)
+    response = api["client"].get(
+        "/api/v1/patients/" + api["pid"] + suffix, headers={"Authorization": "Bearer family-token"}
+    )
+    assert response.status_code == 403
+
+
+def test_family_authorization_requires_active_grant(api):
+    c, pid = api["client"], api["pid"]
+    headers = {"Authorization": "Bearer family-token"}
+    assert c.get("/api/v1/family/patients", headers=headers).json() == []
+    assert c.get(f"/api/v1/family/patients/{pid}", headers=headers).status_code == 403
+    grant_family(api)
+    profile = c.get(f"/api/v1/family/patients/{pid}", headers=headers)
+    assert profile.status_code == 200, profile.text
+    assert profile.json()["preferredName"] == "Test Preferred"
+    assert (
+        not {"stage", "emergencyContacts", "communicationPreferences", "primaryCaregiverId"}
+        & profile.json().keys()
+    )
+    assert c.get("/api/v1/family/patients/unrelated", headers=headers).status_code == 403
+    response = c.put(
+        f"/api/v1/patients/{pid}/family-access/family",
+        headers=api["caregiver"],
+        json={"status": "revoked", "permissions": ["viewProfile", "viewMemories"]},
+    )
+    assert response.status_code == 200, response.text
+    assert c.get("/api/v1/family/patients", headers=headers).json() == []
+
+
+def test_family_contribution_requires_approval_and_selected_visibility(api):
+    c, pid = api["client"], api["pid"]
+    grant_family(api)
+    headers = {"Authorization": "Bearer family-token"}
+    path = f"/api/v1/family/patients/{pid}/memories"
+    result = c.post(
+        path,
+        headers=headers,
+        json={"title": "A family story", "description": "A contributed recollection."},
+    )
+    assert result.status_code == 200, result.text
+    memory = result.json()
+    assert memory["reviewStatus"] == "pending"
+    stored = api["records"][(pid, "memories")][memory["id"]]
+    assert stored["approved"] is False and stored["visibleToPatient"] is False
+    assert stored["aiMayKnowInternally"] is False
+    assert c.get(f"/api/v1/patients/{pid}/memories", headers=api["device"]).json() == []
+    denied = c.post(
+        path, headers=headers, json={"title": "A story", "description": "Text", "approved": True}
+    )
+    assert denied.status_code == 422
+    approved = c.put(
+        f"/api/v1/patients/{pid}/memories/{memory['id']}",
+        headers=api["caregiver"],
+        json={
+            "approved": True,
+            "visibleToPatient": True,
+            "visibleToSelectedFamily": True,
+            "familyUserIds": ["family"],
+        },
+    )
+    assert approved.status_code == 200, approved.text
+    patient_memories = c.get(f"/api/v1/patients/{pid}/memories", headers=api["device"]).json()
+    assert any(m["id"] == memory["id"] for m in patient_memories)
+    notifications = c.get(f"/api/v1/family/patients/{pid}/notifications", headers=headers)
+    assert notifications.status_code == 200 and len(notifications.json()) == 1
+
+
+def test_family_cannot_see_unselected_memory_or_bypass_consent(api):
+    c, pid = api["client"], api["pid"]
+    grant_family(api)
+    _, memory = add_content(api)
+    headers = {"Authorization": "Bearer family-token"}
+    url = f"/api/v1/family/patients/{pid}/memories"
+    assert c.get(url, headers=headers).json() == []
+    c.put(
+        f"/api/v1/patients/{pid}/memories/{memory['id']}",
+        headers=api["caregiver"],
+        json={"visibleToSelectedFamily": True, "familyUserIds": ["family"]},
+    )
+    assert len(c.get(url, headers=headers).json()) == 1
+    c.put(
+        f"/api/v1/patients/{pid}/consent",
+        headers=api["caregiver"],
+        json={"familyAccessLevel": "NONE"},
+    )
+    assert c.get(url, headers=headers).status_code == 403
+    assert (
+        c.put(f"/api/v1/patients/{pid}", headers=headers, json={"stage": "LATE"}).status_code == 403
+    )
+    assert c.post(f"/api/v1/pairing/{pid}/code", headers=headers).status_code == 403
+
+
+def test_activity_management_controls_patient_recommendations(api):
+    c, pid = api["client"], api["pid"]
+    grant_family(api)
+    path = f"/api/v1/patients/{pid}"
+    activities = c.get(path + "/activity-management", headers=api["caregiver"])
+    assert activities.status_code == 200, activities.text
+    assert len(activities.json()) == 5
+    response = c.put(
+        path + "/activity-management",
+        headers=api["caregiver"],
+        json={"type": "daily_routine_sequencing", "enabled": False},
+    )
+    assert response.status_code == 200
+    recommended = c.get(path + "/activities/recommended", headers=api["device"])
+    assert recommended.status_code == 200
+    assert not any(a["type"] == "daily_routine_sequencing" for a in recommended.json())
+
+
+def test_device_revocation_invalidates_patient_session(api, monkeypatch):
+    c, pid = api["client"], api["pid"]
+    monkeypatch.setattr(
+        PatientDeviceRepository, "revoke", lambda _, p, d: api["devices"].discard((p, d))
+    )
+    response = c.delete(f"/api/v1/patients/{pid}/devices/test-device-1", headers=api["caregiver"])
+    assert response.status_code == 204
+    assert c.get(f"/api/v1/patients/{pid}", headers=api["device"]).status_code == 401
+
+
+def test_family_upload_permission_checked_before_storage(api):
+    grant_family(api, ["viewProfile", "viewMemories", "contributeMemory"])
+    response = api["client"].post(
+        "/api/v1/media/upload",
+        headers={"Authorization": "Bearer family-token"},
+        data={"type": "photo", "patientId": api["pid"]},
+        files={"file": ("photo.png", b"test", "image/png")},
+    )
+    assert response.status_code == 403
+
+
+def test_family_cannot_create_unrelated_patient_or_read_alerts(api):
+    headers = {"Authorization": "Bearer family-token"}
+    assert (
+        api["client"]
+        .post("/api/v1/patients", headers=headers, json={"firstName": "Test", "stage": "EARLY"})
+        .status_code
+        == 403
+    )
+    assert api["client"].get("/api/v1/alerts", headers=headers).status_code == 403

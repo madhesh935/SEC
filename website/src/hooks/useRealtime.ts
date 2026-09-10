@@ -7,14 +7,15 @@ export function useLiveCompanion(patientId?: string) {
   const [isConnected, setIsConnected] = useState(false);
 
   useEffect(() => {
+    setLiveStatus(null);
+    setIsConnected(false);
     if (!patientId) return;
-
-    setIsConnected(true);
     const unsubscribe = realtimeService.subscribeToLiveStatus(
       patientId,
       (updatedStatus) => {
         setLiveStatus(updatedStatus);
-      }
+      },
+      setIsConnected
     );
 
     return () => {

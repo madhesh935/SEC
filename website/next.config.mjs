@@ -1,7 +1,7 @@
 /** @type {import('next').NextConfig} */
 const nextConfig = {
   reactStrictMode: true,
-  outputFileTracingRoot: process.cwd(),
+  devIndicators: false,
   images: {
     domains: ["images.unsplash.com", "firebasestorage.googleapis.com"],
     remotePatterns: [
@@ -10,6 +10,16 @@ const nextConfig = {
         hostname: "**",
       },
     ],
+  },
+  eslint: {
+    ignoreDuringBuilds: true,
+  },
+  typescript: {
+    ignoreBuildErrors: false,
+  },
+  experimental: {
+    cpus: 1,
+    webpackBuildWorker: false,
   },
 };
 

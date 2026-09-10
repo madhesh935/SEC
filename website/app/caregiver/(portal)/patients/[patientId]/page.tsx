@@ -1,0 +1,1 @@
+import {Suspense} from "react";import {PatientProfile} from "@/components/portal/PatientProfile";export default function Page(){return <Suspense fallback={<p>Loading profile…</p>}><PatientProfile/></Suspense>;}

@@ -1,6 +1,9 @@
 import { z } from "zod";
 
 export const consentSchema = z.object({
+  biographyUsage: z.boolean().optional(),
+  aiMayMentionMemoryDirectly: z.boolean().optional(),
+  patientMaySeeMemory: z.boolean().optional(),
   personalDataCollection: z.boolean().default(true),
   memoriesUsage: z.boolean().default(true),
   photosUsage: z.boolean().default(true),
@@ -13,3 +16,4 @@ export const consentSchema = z.object({
 });
 
 export type ConsentFormData = z.infer<typeof consentSchema>;
+

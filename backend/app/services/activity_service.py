@@ -31,8 +31,8 @@ class ActivityService:
                 dict(
                     id=f"family:{member.id}",
                     type="family_recognition",
-                    title="Family Match",
-                    description="Recognize your loved ones",
+                    title="Card Match: Loved Ones",
+                    description="Card matching game with familiar faces & names",
                     prompt=(
                         f"This is {member.name}, your {member.relationship}."
                         if policy.avoidMemoryTesting
@@ -55,7 +55,7 @@ class ActivityService:
                     dict(
                         id=f"recall:{memory.id}",
                         type="life_memory_recall",
-                        title="Memory Recall",
+                        title="Cognitive Exercise: Reminisce",
                         description=memory.title,
                         prompt=memory.description,
                         interactionMode="reflection",
@@ -68,8 +68,8 @@ class ActivityService:
                     dict(
                         id=f"photo:{memory.id}",
                         type="photo_recognition",
-                        title="Photo Recognition",
-                        description="Familiar places and moments",
+                        title="Card Match: Cherished Places",
+                        description="Match the cards to familiar photos and memories",
                         imageUrl=memory.imageUrl,
                         prompt=memory.title
                         if policy.avoidMemoryTesting
@@ -90,7 +90,7 @@ class ActivityService:
                     dict(
                         id=f"music:{memory.id}",
                         type="music_memory",
-                        title="Music & Memory",
+                        title="Cognitive Game: Melody Match",
                         description=memory.title,
                         prompt="Take a moment to enjoy this music.",
                         audioUrl=memory.audioUrl,
@@ -114,7 +114,7 @@ class ActivityService:
                     dict(
                         id=f"biography:{key}",
                         type="life_memory_recall",
-                        title="Memory Recall",
+                        title="Cognitive Exercise: Reminisce",
                         description=value,
                         prompt=f"Would you like to talk about {value}?",
                         interactionMode="reflection",
@@ -128,8 +128,8 @@ class ActivityService:
                 dict(
                     id="routine-sequencing",
                     type="daily_routine_sequencing",
-                    title="Daily Routine",
-                    description="Familiar steps through your day",
+                    title="Pattern Finding: Day Schedule",
+                    description="Arrange daily steps in the right pattern and sequence",
                     prompt="Let’s look at your day together."
                     if policy.avoidMemoryTesting
                     else "Choose the steps in the order of your day.",
@@ -151,7 +151,11 @@ class ActivityService:
                     explanation="One step at a time.",
                 )
             )
-        return [dict(row, difficulty=difficulty) for row in result]
+        return [
+            dict(row, difficulty=difficulty)
+            for row in result
+            if self.patient.get("activityPreferences", {}).get(row["type"], True)
+        ]
 
     def recommended(self) -> list[dict]:
         # One per type keeps the main list quiet; all data-backed items remain addressable.

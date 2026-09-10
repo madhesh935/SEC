@@ -41,7 +41,7 @@ export function useStrategyEffectivenessQuery(patientId?: string) {
   });
 }
 
-export function useDistressTrendQuery(patientId?: string, range: "today" | "7d" | "30d" = "today") {
+export function useDistressTrendQuery(patientId?: string, range: "today" | "7d" | "14d" | "30d" = "today") {
   return useQuery({
     queryKey: ["distress-trend", patientId, range],
     queryFn: () =>

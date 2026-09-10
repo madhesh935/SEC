@@ -11,11 +11,11 @@ from __future__ import annotations
 import asyncio
 import json
 
-from fastapi import APIRouter, Depends, Query, WebSocket, WebSocketDisconnect
+from fastapi import APIRouter, Depends, Query, Request, WebSocket, WebSocketDisconnect
 from fastapi.responses import StreamingResponse
 
 from app.core.exceptions import AuthenticationError, GeriCareError
-from app.core.permissions import require_patient_access
+from app.core.permissions import require_caregiver_role, require_patient_access
 from app.core.security import verify_firebase_id_token
 from app.dependencies import (
     authorize_patient_access,
@@ -43,19 +43,26 @@ def _authenticate_ws_user(token: str):
     role = user_doc.get("role") if user_doc else None
     if role not in (UserRole.CAREGIVER, UserRole.FAMILY, UserRole.ADMIN):
         raise AuthenticationError("No authorized role is assigned to this account yet.")
-    return AuthenticatedUser(uid=uid, email=decoded.get("email"), role=role)
+    user = AuthenticatedUser(uid=uid, email=decoded.get("email"), role=role)
+    require_caregiver_role(user)
+    return user
 
 
 _POLL_INTERVAL_SECONDS = 2.0
 _MAX_STREAM_SECONDS = 300
 
 
-async def _event_stream(patient_id: str):
+async def _event_stream(patient_id: str, token: str):
     service = ConversationService()
     last_payload: str | None = None
     elapsed = 0.0
 
     while elapsed < _MAX_STREAM_SECONDS:
+        try:
+            user = _authenticate_ws_user(token)
+            require_patient_access(user, get_patient_repository().get(patient_id), [])
+        except GeriCareError:
+            return
         status = service.get_live_status(patient_id)
         payload = json.dumps(status)
         if payload != last_payload:
@@ -68,8 +75,11 @@ async def _event_stream(patient_id: str):
 
 
 @router.get("")
-async def realtime_updates(patient: dict = Depends(authorize_patient_access)) -> StreamingResponse:
-    return StreamingResponse(_event_stream(patient["id"]), media_type="text/event-stream")
+async def realtime_updates(
+    request: Request, patient: dict = Depends(authorize_patient_access)
+) -> StreamingResponse:
+    token = request.headers.get("authorization", "").removeprefix("Bearer ")
+    return StreamingResponse(_event_stream(patient["id"], token), media_type="text/event-stream")
 
 
 @live_ws_router.websocket("/live-ws")
@@ -95,6 +105,8 @@ async def live_status_ws(websocket: WebSocket, patient_id: str, token: str = Que
     last_payload: str | None = None
     try:
         while True:
+            user = _authenticate_ws_user(token)
+            require_patient_access(user, patient_repo.get(patient_id), [])
             status = service.get_live_status(patient_id)
             payload = json.dumps(status)
             if payload != last_payload:
@@ -103,6 +115,8 @@ async def live_status_ws(websocket: WebSocket, patient_id: str, token: str = Que
             await asyncio.sleep(_WS_POLL_INTERVAL_SECONDS)
     except WebSocketDisconnect:
         pass
+    except GeriCareError:
+        await websocket.close(code=4403)
 
 
 @alerts_ws_router.websocket("/alerts-ws")
@@ -117,14 +131,10 @@ async def alerts_ws(websocket: WebSocket, token: str = Query(...)) -> None:
 
     await websocket.accept()
     patient_repo = get_patient_repository()
-    user_repo = get_user_repository()
     alert_service = AlertService()
 
     def _authorized_patient_ids() -> list[str]:
-        return list(
-            {p["id"] for p in patient_repo.list_for_caregiver(user.uid)}
-            | set(user_repo.family_patient_ids(user.uid))
-        )
+        return list({p["id"] for p in patient_repo.list_for_caregiver(user.uid)})
 
     # Baseline: don't flood a freshly connected client with alert history -
     # only stream alerts created after the socket opened.
@@ -134,6 +144,7 @@ async def alerts_ws(websocket: WebSocket, token: str = Query(...)) -> None:
 
     try:
         while True:
+            user = _authenticate_ws_user(token)
             alerts = alert_service.list_alerts(_authorized_patient_ids(), status=None)
             for alert in alerts:
                 if alert["id"] not in seen_ids:
@@ -142,3 +153,5 @@ async def alerts_ws(websocket: WebSocket, token: str = Query(...)) -> None:
             await asyncio.sleep(_WS_POLL_INTERVAL_SECONDS)
     except WebSocketDisconnect:
         pass
+    except GeriCareError:
+        await websocket.close(code=4403)

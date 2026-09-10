@@ -64,7 +64,13 @@ class AuthService:
         avatar_url = firebase_user.photo_url if firebase_user else None
 
         created = self.user_repository.upsert(
-            uid, {"role": UserRole.CAREGIVER.value, "name": name, "avatarUrl": avatar_url}
+            uid,
+            {
+                "role": UserRole.CAREGIVER.value,
+                "name": name,
+                "avatarUrl": avatar_url,
+                "email": email,
+            },
         )
         audit_log("user_role_bootstrapped", uid, role=UserRole.CAREGIVER.value)
         return {

@@ -6,7 +6,12 @@ from fastapi import APIRouter, Depends, Query
 
 from app.core.exceptions import ResourceNotFoundError
 from app.core.security import AuthenticatedUser
-from app.dependencies import get_current_user, get_patient_repository, get_user_repository
+from app.dependencies import (
+    get_current_caregiver as get_current_user,
+)
+from app.dependencies import (
+    get_patient_repository,
+)
 from app.schemas.alert import AlertActionRequest, AlertResponse
 from app.services.alert_service import AlertService
 
@@ -15,10 +20,8 @@ router = APIRouter(prefix="/alerts", tags=["Alerts"])
 
 def _authorized_patient_ids(user: AuthenticatedUser) -> list[str]:
     patient_repo = get_patient_repository()
-    user_repo = get_user_repository()
     caregiver_patients = [p["id"] for p in patient_repo.list_for_caregiver(user.uid)]
-    family_patients = user_repo.family_patient_ids(user.uid)
-    return list(set(caregiver_patients + family_patients))
+    return caregiver_patients
 
 
 def _to_alert_response(alert: dict) -> AlertResponse:

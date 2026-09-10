@@ -94,7 +94,7 @@ async def get_current_device(
 
 async def authorize_patient_access(
     patient_id: str,
-    user: AuthenticatedUser = Depends(get_current_user),
+    user: AuthenticatedUser = Depends(get_current_caregiver),
 ) -> dict:
     patient_repo = get_patient_repository()
     user_repo = get_user_repository()
@@ -144,6 +144,7 @@ async def get_patient_access_context(
     if role not in (UserRole.CAREGIVER, UserRole.FAMILY, UserRole.ADMIN):
         raise AuthenticationError("No authorized role is assigned to this account yet.")
     user = AuthenticatedUser(uid=uid, email=decoded.get("email"), role=role)
+    require_caregiver_role(user)
 
     patient = patient_repo.get(patient_id)
     family_ids = user_repo.family_patient_ids(uid)

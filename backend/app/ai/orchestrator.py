@@ -25,6 +25,7 @@ from app.ai.repetition_engine import RecentUtterance, analyze_repetition
 from app.ai.response_validator import (
     SAFE_FALLBACK_EMERGENCY,
     SAFE_FALLBACK_GENERIC,
+    truncate_to_sentences,
     validate_response,
 )
 from app.ai.safety_engine import assess_safety
@@ -377,6 +378,15 @@ class InteractionOrchestrator:
         )
         if retry_validation.passed:
             return retry_text
+
+        # A response that is otherwise safe but merely ran over the stage's
+        # sentence limit still carries a real, relevant answer - trimming it
+        # keeps that answer instead of discarding it for a generic platitude
+        # that ignores what the patient actually said.
+        if retry_validation.violations == ["response_too_long_for_stage"]:
+            trimmed = truncate_to_sentences(retry_text, stage_policy.maxSentences)
+            if validate_response(trimmed, stage_policy, strategy, restricted_snippets).passed:
+                return trimmed
 
         logger.warning(
             "response_validation_failed_after_retry", violations=retry_validation.violations

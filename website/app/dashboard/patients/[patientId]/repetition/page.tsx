@@ -2,6 +2,7 @@
 
 import * as React from "react";
 import { useParams } from "next/navigation";
+import { usePatientStore } from "@/store/patient.store";
 import { useRepetitionAnalyticsQuery } from "@/hooks/useAnalytics";
 import { usePatientQuery } from "@/hooks/usePatients";
 import { PageHeader } from "@/components/layout/PageHeader";
@@ -10,7 +11,6 @@ import { ChartContainer } from "@/components/ui/chart-container";
 import { DataTable, Column } from "@/components/ui/data-table";
 import { RepeatedTopicItem } from "@/types";
 import { LoadingState } from "@/components/states/LoadingState";
-import { EmptyState } from "@/components/states/EmptyState";
 import { ErrorState } from "@/components/states/ErrorState";
 import {
   ResponsiveContainer,
@@ -30,7 +30,8 @@ import { Button } from "@/components/ui/button";
 
 export default function RepetitionAnalyticsPage() {
   const params = useParams();
-  const patientId = params.patientId as string;
+  const selectedId = usePatientStore(s => s.selectedPatientId);
+  const patientId = (params.patientId as string) || selectedId || "";
 
   const { data: patient } = usePatientQuery(patientId);
   const {
@@ -58,7 +59,6 @@ export default function RepetitionAnalyticsPage() {
     );
   }
 
-  const hasTopics = repetitionData?.topics && repetitionData.topics.length > 0;
   const hasTrend = repetitionData?.trend && repetitionData.trend.length > 0;
   const hasTimeBreakdown =
     repetitionData?.timeOfDayBreakdown &&
@@ -268,3 +268,4 @@ export default function RepetitionAnalyticsPage() {
     </div>
   );
 }
+

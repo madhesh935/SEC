@@ -2,63 +2,84 @@
 @tailwind components;
 @tailwind utilities;
 
+/* Import Inter from Google Fonts */
+@import url("https://fonts.googleapis.com/css2?family=Inter:wght@400;500;550;600;650;700;800&display=swap");
+
 @layer base {
   :root {
-    --background: 40 33% 98%; /* #FAF9F6 Warm white */
-    --foreground: 222 47% 11%; /* #0F172A Dark navy */
+    --background: 100 20% 97%; /* Soft warm white */
+    --foreground: 206 53% 17%; /* Deep navy */
 
     --card: 0 0% 100%;
-    --card-foreground: 222 47% 11%;
+    --card-foreground: 206 53% 17%;
 
     --popover: 0 0% 100%;
-    --popover-foreground: 222 47% 11%;
+    --popover-foreground: 206 53% 17%;
 
-    --primary: 173 80% 32%; /* #0D9488 Muted teal */
+    --primary: 177 88% 26%; /* GeriCare teal */
     --primary-foreground: 0 0% 100%;
 
-    --secondary: 210 40% 96.1%;
-    --secondary-foreground: 222 47% 11%;
+    --secondary: 150 30% 95%;
+    --secondary-foreground: 177 60% 22%;
 
-    --muted: 210 40% 96.1%;
-    --muted-foreground: 215.4 16.3% 46.9%;
+    --muted: 120 15% 95%;
+    --muted-foreground: 174 14% 44%;
 
-    --accent: 173 58% 95%;
-    --accent-foreground: 173 80% 25%;
+    --accent: 177 58% 93%;
+    --accent-foreground: 177 88% 20%;
 
-    --destructive: 0 84.2% 60.2%;
-    --destructive-foreground: 210 40% 98%;
+    --destructive: 4 75% 50%;
+    --destructive-foreground: 0 0% 100%;
 
-    --border: 214.3 31.8% 91.4%;
-    --input: 214.3 31.8% 91.4%;
-    --ring: 173 80% 32%;
+    --border: 130 18% 86%;
+    --input: 130 18% 86%;
+    --ring: 177 88% 26%;
 
-    --radius: 0.875rem;
+    --radius: 1rem;
   }
 }
 
-body {
-  background-color: #FAF9F6;
-  color: #0F172A;
-  font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
-  -webkit-font-smoothing: antialiased;
-  -moz-osx-font-smoothing: grayscale;
+html {
+  -webkit-text-size-adjust: 100%;
 }
 
-/* Custom scrollbar for sleek healthcare SaaS appearance */
+body {
+  background-color: #f4f6f2;
+  color: #152e44;
+  font-family: "Inter", -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+  font-feature-settings: "cv02", "cv03", "cv04", "cv11";
+}
+
+/* Typography reset */
+h1, h2, h3, h4, h5, h6 {
+  line-height: 1.2;
+}
+
+/* Custom scrollbar */
 ::-webkit-scrollbar {
   width: 6px;
   height: 6px;
 }
-
 ::-webkit-scrollbar-track {
   background: transparent;
 }
-
 ::-webkit-scrollbar-thumb {
-  background: #cbd5e1;
+  background: #b8c8c5;
   border-radius: 9999px;
 }
-
 ::-webkit-scrollbar-thumb:hover {
-  background: #94a3b8;
+  background: #8aaa9e;
+}
+
+/* Selection */
+::selection {
+  background: rgba(8, 127, 121, 0.18);
+  color: #0d4d47;
+}
+
+/* Smooth focus rings */
+* {
+  scroll-behavior: smooth;
 }

@@ -3,7 +3,7 @@
 import * as React from "react";
 import { FamilyMember } from "@/types";
 import { Button } from "@/components/ui/button";
-import { Phone, Mic, Edit2, Trash2, Heart } from "lucide-react";
+import { Phone, Mic, Edit2, Trash2 } from "lucide-react";
 import { PatientAvatar } from "@/components/patient/PatientAvatar";
 
 export interface FamilyMemberCardProps {

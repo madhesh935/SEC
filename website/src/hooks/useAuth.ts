@@ -9,7 +9,7 @@ import { ApiError } from "@/types";
 
 export function useAuth() {
   const router = useRouter();
-  const { user, token, role, isAuthenticated, setSession, clearSession, setRole } =
+  const { user, token, role, isAuthenticated, setSession, clearSession } =
     useAuthStore();
 
   const [isLoading, setIsLoading] = useState(false);
@@ -21,7 +21,7 @@ export function useAuth() {
     try {
       const response = await authService.login(data);
       setSession(response.user, response.token);
-      router.push("/dashboard");
+      router.push(response.user.role === "family" ? "/family" : "/caregiver");
       return response;
     } catch (err) {
       const apiErr = err as ApiError;
@@ -41,7 +41,7 @@ export function useAuth() {
     try {
       const response = await authService.signup(data);
       setSession(response.user, response.token);
-      router.push("/dashboard");
+      router.push(response.user.role === "family" ? "/family" : "/caregiver");
       return response;
     } catch (err) {
       const apiErr = err as ApiError;
@@ -68,7 +68,7 @@ export function useAuth() {
 
       const response = await authService.loginWithGoogle(idToken);
       setSession(response.user, response.token);
-      router.push("/dashboard");
+      router.push(response.user.role === "family" ? "/family" : "/caregiver");
       return response;
     } catch (err) {
       const apiErr = err as ApiError;
@@ -119,7 +119,8 @@ export function useAuth() {
     loginWithGoogle,
     logout,
     forgotPassword,
-    setRole,
+
     clearError: () => setError(null),
   };
 }
+

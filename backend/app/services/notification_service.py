@@ -11,6 +11,7 @@ from firebase_admin import messaging
 
 from app.core.logging import get_logger
 from app.database.repositories.device_repository import CaregiverDeviceTokenRepository
+from app.database.repositories.user_repository import UserRepository
 
 logger = get_logger(__name__)
 
@@ -23,6 +24,9 @@ class NotificationService:
         self.token_repository.register(user_id, token)
 
     def notify_caregiver_of_alert(self, caregiver_uid: str, alert_id: str, patient_id: str) -> str:
+        user = UserRepository().get(caregiver_uid) or {}
+        if not user.get("preferences", {}).get("notificationsEnabled", True):
+            return "disabled"
         tokens = self.token_repository.list_tokens(caregiver_uid)
         if not tokens:
             logger.info("no_fcm_tokens_for_caregiver", caregiver_uid=caregiver_uid)

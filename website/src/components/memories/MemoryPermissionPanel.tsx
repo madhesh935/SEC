@@ -2,7 +2,7 @@
 
 import * as React from "react";
 import { Switch } from "@/components/ui/switch";
-import { ShieldCheck, Lock, Eye, Bot, AlertTriangle } from "lucide-react";
+import { ShieldCheck, AlertTriangle } from "lucide-react";
 
 export interface MemoryPermissions {
   aiMayKnowInternally?: boolean;

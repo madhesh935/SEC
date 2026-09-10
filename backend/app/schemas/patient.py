@@ -29,6 +29,7 @@ class EmergencyContact(BaseModel):
 
 
 class PatientCreateRequest(BaseModel):
+    biographySummary: str | None = Field(default=None, max_length=1000)
     emergencyServicesPhone: str | None = Field(default=None, max_length=30)
     firstName: str = Field(min_length=1, max_length=100)
     preferredName: str | None = Field(default=None, max_length=100)
@@ -60,6 +61,7 @@ class PatientCreateRequest(BaseModel):
 
 
 class PatientUpdateRequest(BaseModel):
+    biographySummary: str | None = Field(default=None, max_length=1000)
     emergencyServicesPhone: str | None = Field(default=None, max_length=30)
     firstName: str | None = None
     preferredName: str | None = None
@@ -87,7 +89,9 @@ class PatientUpdateRequest(BaseModel):
 
 
 class PatientAdmin(BaseModel):
-    """Caregiver / family facing patient record."""
+    """Caregiver-facing patient record. Family uses an explicit safe projection."""
+
+    biographySummary: str | None = Field(default=None, max_length=1000)
 
     emergencyServicesPhone: str | None = Field(default=None, max_length=30)
 

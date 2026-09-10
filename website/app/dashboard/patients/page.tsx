@@ -39,7 +39,7 @@ export default function PatientsPage() {
         title="Patient Profiles"
         subtitle="Manage dementia care plans, biographical context, personal memories, and family connections."
         action={
-          <Link href="/dashboard/patients/new">
+          <Link href="/caregiver/patients/new">
             <Button variant="teal" size="sm" className="gap-2">
               <Plus className="h-4 w-4" />
               <span>Create Patient</span>
@@ -78,7 +78,7 @@ export default function PatientsPage() {
           title="No patient profiles have been created yet."
           description="Build a rich, personalized profile with biographical details, comfort routines, and personal memories to power the AI companion."
           actionLabel="Create First Patient"
-          onAction={() => window.location.assign("/dashboard/patients/new")}
+          onAction={() => window.location.assign("/caregiver/patients/new")}
         />
       ) : filteredPatients.length === 0 ? (
         <div className="py-12 text-center">

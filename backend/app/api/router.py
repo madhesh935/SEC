@@ -18,6 +18,7 @@ from app.api.v1 import (
     pairing,
     patient_experience,
     patients,
+    portal,
     realtime,
 )
 
@@ -41,3 +42,5 @@ api_router.include_router(media.router)
 api_router.include_router(realtime.router)
 api_router.include_router(realtime.live_ws_router)
 api_router.include_router(realtime.alerts_ws_router)
+
+api_router.include_router(portal.router)

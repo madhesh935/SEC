@@ -1,5 +1,5 @@
 import apiClient from "./api";
-import { Patient, PatientStatus, LiveCompanionStatus } from "@/types";
+import { Patient, PatientStatus, LiveCompanionStatus, ComfortContentItem } from "@/types";
 import { CreatePatientFormData } from "@/schemas/patient.schema";
 
 export const patientService = {
@@ -51,6 +51,16 @@ export const patientService = {
   async getLiveStatus(patientId: string): Promise<LiveCompanionStatus> {
     const response = await apiClient.get<LiveCompanionStatus>(
       `/api/v1/patients/${patientId}/live-status`
+    );
+    return response.data;
+  },
+
+  /**
+   * Fetch comfort content items (music, relaxing sounds, photos, voice notes).
+   */
+  async getComfortContent(patientId: string): Promise<ComfortContentItem[]> {
+    const response = await apiClient.get<ComfortContentItem[]>(
+      `/api/v1/patients/${patientId}/comfort`
     );
     return response.data;
   },

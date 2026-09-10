@@ -5,18 +5,20 @@ import hooks from "eslint-plugin-react-hooks";
 export default ts.config(
   {
     ignores: [
-      "node_modules/**",
-      "website/node_modules/**",
+      "**/node_modules/**",
       "**/.next/**",
-      "dist/**",
-      ".expo/**",
+      "**/dist/**",
+      "**/dist-android/**",
+      "**/dist-ios/**",
+      "**/.expo/**",
       "backend/**",
+      "**/*.d.ts",
     ],
   },
   {
     files: [
-      "app/**/*.{ts,tsx}",
-      "src/**/*.{ts,tsx}",
+      "mobile/app/**/*.{ts,tsx}",
+      "mobile/src/**/*.{ts,tsx}",
       "website/app/**/*.{ts,tsx}",
       "website/src/**/*.{ts,tsx}",
     ],

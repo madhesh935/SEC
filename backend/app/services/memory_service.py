@@ -54,7 +54,7 @@ class MemoryService:
     def update_memory(
         self, actor_uid: str, patient_id: str, memory_id: str, payload: MemoryUpdateRequest
     ) -> dict:
-        existing = self.get_memory(patient_id, memory_id)
+        existing = dict(self.get_memory(patient_id, memory_id))
         data = {k: v for k, v in payload.model_dump(mode="json").items() if v is not None}
         if "title" in data or "description" in data:
             title = data.get("title", existing.get("title", ""))
@@ -73,6 +73,21 @@ class MemoryService:
         )
         if data:
             self.memory_repository.update(patient_id, memory_id, data)
+            if data.get("approved") and not existing.get("approved") and existing.get("createdBy"):
+                from app.database.repositories.portal_repository import FamilyNotificationRepository
+                from app.database.repositories.user_repository import UserRepository
+
+                contributor = UserRepository().get(existing["createdBy"])
+                if contributor and contributor.get("role") == "family":
+                    FamilyNotificationRepository().create(
+                        patient_id,
+                        {
+                            "userId": existing["createdBy"],
+                            "title": "Your memory was approved",
+                            "message": data.get("title", existing["title"]),
+                            "memoryId": memory_id,
+                        },
+                    )
             audit_log(
                 "memory_updated",
                 actor_uid,

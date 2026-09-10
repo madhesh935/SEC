@@ -8,7 +8,7 @@ import { getStageBadgeInfo, formatRelativeTime } from "@/utils/formatters";
 import { usePatientStore } from "@/store/patient.store";
 import { useRouter } from "next/navigation";
 import Link from "next/link";
-import { Clock, Globe, ArrowUpRight, HeartHandshake } from "lucide-react";
+import { Clock, Globe, ArrowUpRight } from "lucide-react";
 
 export interface PatientCardProps {
   patient: Patient;
@@ -24,7 +24,7 @@ export function PatientCard({ patient }: PatientCardProps) {
 
   const handleOpenDashboard = () => {
     setSelectedPatientId(patient.id);
-    router.push("/dashboard");
+    router.push("/caregiver");
   };
 
   return (
@@ -89,7 +89,7 @@ export function PatientCard({ patient }: PatientCardProps) {
       {/* Action Buttons */}
       <div className="mt-6 flex items-center gap-2 border-t border-slate-100 pt-3">
         <Link
-          href={`/dashboard/patients/${patient.id}`}
+          href={`/caregiver/patients/${patient.id}`}
           className="flex-1"
         >
           <Button variant="outline" size="sm" className="w-full text-xs">

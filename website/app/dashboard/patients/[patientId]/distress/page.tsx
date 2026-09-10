@@ -2,6 +2,7 @@
 
 import * as React from "react";
 import { useParams } from "next/navigation";
+import { usePatientStore } from "@/store/patient.store";
 import { useDistressAnalyticsQuery } from "@/hooks/useAnalytics";
 import { usePatientQuery } from "@/hooks/usePatients";
 import { PageHeader } from "@/components/layout/PageHeader";
@@ -9,13 +10,10 @@ import { MetricCard } from "@/components/dashboard/MetricCard";
 import { ChartContainer } from "@/components/ui/chart-container";
 import { LoadingState } from "@/components/states/LoadingState";
 import { ErrorState } from "@/components/states/ErrorState";
-import { EmptyState } from "@/components/states/EmptyState";
 import {
   ResponsiveContainer,
   LineChart,
   Line,
-  BarChart,
-  Bar,
   XAxis,
   YAxis,
   Tooltip,
@@ -27,20 +25,18 @@ import {
 import {
   HeartPulse,
   AlertTriangle,
-  Smile,
-  ShieldCheck,
   Sparkles,
   Info,
 } from "lucide-react";
 import Link from "next/link";
 import { Button } from "@/components/ui/button";
-import { formatRelativeTime } from "@/utils/formatters";
 
 const EMOTION_COLORS = ["#14b8a6", "#38bdf8", "#a855f7", "#f59e0b", "#94a3b8"];
 
 export default function DistressAnalyticsPage() {
   const params = useParams();
-  const patientId = params.patientId as string;
+  const selectedId = usePatientStore(s => s.selectedPatientId);
+  const patientId = (params.patientId as string) || selectedId || "";
 
   const { data: patient } = usePatientQuery(patientId);
   const {
@@ -263,3 +259,4 @@ export default function DistressAnalyticsPage() {
     </div>
   );
 }
+

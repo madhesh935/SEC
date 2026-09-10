@@ -2,6 +2,7 @@ import { z } from "zod";
 
 export const memorySchema = z.object({
   displayDate: z.string().max(80).optional(),
+  familyUserIds: z.array(z.string()).default([]),
   photoUrls: z.array(z.string()).default([]),
   title: z.string().min(1, "Memory title is required"),
   description: z.string().min(1, "Memory story or description is required"),
@@ -22,3 +23,4 @@ export const memorySchema = z.object({
 });
 
 export type MemoryFormData = z.infer<typeof memorySchema>;
+

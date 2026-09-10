@@ -5,10 +5,8 @@ import { Memory } from "@/types";
 import { Button } from "@/components/ui/button";
 import {
   Sparkles,
-  ShieldAlert,
   CheckCircle,
   Volume2,
-  Image as ImageIcon,
   Edit2,
   Trash2,
   Users,

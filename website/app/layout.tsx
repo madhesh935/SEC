@@ -1,7 +1,8 @@
 import type { Metadata } from "next";
 import "./globals.css";
+import "./portal.css";
 import { QueryProvider } from "@/components/layout/QueryProvider";
-import { NotificationCenter } from "@/components/layout/NotificationCenter";
+import { AuthProvider } from "@/components/portal/AuthProvider";
 
 export const metadata: Metadata = {
   title: "GeriCare AI — Caregiver & Family Portal",
@@ -15,13 +16,15 @@ export default function RootLayout({
   children: React.ReactNode;
 }) {
   return (
-    <html lang="en">
+    <html lang="en" suppressHydrationWarning>
       <body className="min-h-screen bg-warm-50 text-navy-900 antialiased selection:bg-teal-100 selection:text-teal-900">
         <QueryProvider>
-          {children}
-          <NotificationCenter />
+          <AuthProvider>{children}</AuthProvider>
+
         </QueryProvider>
       </body>
     </html>
   );
 }
+
+

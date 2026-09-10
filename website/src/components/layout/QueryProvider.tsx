@@ -10,7 +10,7 @@ export function QueryProvider({ children }: { children: React.ReactNode }) {
         defaultOptions: {
           queries: {
             staleTime: 1000 * 60 * 2, // 2 minutes
-            refetchOnWindowFocus: false,
+            refetchOnWindowFocus: true,
             retry: (failureCount, error: unknown) => {
               // Do not retry 401/403/404 errors
               const status = (error as { status?: number })?.status;
@@ -28,3 +28,4 @@ export function QueryProvider({ children }: { children: React.ReactNode }) {
     <QueryClientProvider client={queryClient}>{children}</QueryClientProvider>
   );
 }
+

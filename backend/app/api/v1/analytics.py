@@ -52,7 +52,7 @@ async def strategy_effectiveness(
 
 @router.get("/distress-trend", response_model=list[DistressTrendPoint])
 async def distress_trend(
-    range: Literal["today", "7d", "30d"] = Query(default="today"),
+    range: Literal["today", "7d", "14d", "30d"] = Query(default="today"),
     patient: dict = Depends(authorize_patient_access),
 ) -> list[DistressTrendPoint]:
     service = AnalyticsService()

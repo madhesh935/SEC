@@ -1,7 +1,7 @@
 "use client";
 
 import * as React from "react";
-import { useParams, useRouter } from "next/navigation";
+import { useParams } from "next/navigation";
 import {
   useAlertDetailQuery,
   useAcknowledgeAlertMutation,
@@ -20,16 +20,12 @@ import {
   getSeverityBadgeInfo,
 } from "@/utils/formatters";
 import {
-  AlertTriangle,
   CheckCircle2,
-  Phone,
   MessageSquare,
   Clock,
-  ShieldAlert,
   User,
   HeartHandshake,
   Check,
-  RotateCcw,
 } from "lucide-react";
 import Link from "next/link";
 import { cn } from "@/utils/cn";
@@ -37,7 +33,6 @@ import { cn } from "@/utils/cn";
 export default function AlertDetailPage() {
   const params = useParams();
   const alertId = params.alertId as string;
-  const router = useRouter();
 
   const {
     data: alert,

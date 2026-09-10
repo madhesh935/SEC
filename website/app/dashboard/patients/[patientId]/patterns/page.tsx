@@ -2,6 +2,7 @@
 
 import * as React from "react";
 import { useParams } from "next/navigation";
+import { usePatientStore } from "@/store/patient.store";
 import {
   usePatternAnalyticsQuery,
   useStrategyEffectivenessQuery,
@@ -30,16 +31,13 @@ import {
   Sparkles,
   TrendingDown,
   Info,
-  Music,
-  Heart,
-  MessageCircle,
 } from "lucide-react";
 import Link from "next/link";
-import { cn } from "@/utils/cn";
 
 export default function EveningPatternPage() {
   const params = useParams();
-  const patientId = params.patientId as string;
+  const selectedId = usePatientStore(s => s.selectedPatientId);
+  const patientId = (params.patientId as string) || selectedId || "";
 
   const { data: patient } = usePatientQuery(patientId);
 
@@ -53,7 +51,6 @@ export default function EveningPatternPage() {
   const {
     data: strategies,
     isLoading: isStrategiesLoading,
-    isError: isStrategiesError,
   } = useStrategyEffectivenessQuery(patientId);
 
   const patientName = patient
@@ -272,3 +269,4 @@ export default function EveningPatternPage() {
     </div>
   );
 }
+

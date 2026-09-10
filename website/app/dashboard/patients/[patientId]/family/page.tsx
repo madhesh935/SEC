@@ -2,6 +2,7 @@
 
 import * as React from "react";
 import { useParams } from "next/navigation";
+import { usePatientStore } from "@/store/patient.store";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { familyService } from "@/services/family.service";
 import { usePatientQuery } from "@/hooks/usePatients";
@@ -14,12 +15,13 @@ import { EmptyState } from "@/components/states/EmptyState";
 import { ErrorState } from "@/components/states/ErrorState";
 import { ConfirmDialog } from "@/components/ui/confirm-dialog";
 import { Button } from "@/components/ui/button";
-import { Plus, Users, HeartHandshake } from "lucide-react";
+import { Plus, HeartHandshake } from "lucide-react";
 import Link from "next/link";
 
 export default function PatientFamilyPage() {
   const params = useParams();
-  const patientId = params.patientId as string;
+  const selectedId = usePatientStore(s => s.selectedPatientId);
+  const patientId = (params.patientId as string) || selectedId || "";
   const queryClient = useQueryClient();
 
   const { data: patient } = usePatientQuery(patientId);
@@ -168,3 +170,4 @@ export default function PatientFamilyPage() {
     </div>
   );
 }
+

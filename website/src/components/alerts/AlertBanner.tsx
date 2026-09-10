@@ -1,6 +1,6 @@
 import * as React from "react";
 import { Alert, AlertSeverity } from "@/types";
-import { AlertCircle, AlertTriangle, Info, BellRing } from "lucide-react";
+import { AlertCircle, AlertTriangle, Info } from "lucide-react";
 import { cn } from "@/utils/cn";
 import { formatRelativeTime, getSeverityBadgeInfo } from "@/utils/formatters";
 import Link from "next/link";

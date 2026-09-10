@@ -52,7 +52,9 @@ class PairingService:
         )
         for _ in range(_MAX_PIN_GENERATION_ATTEMPTS):
             code = generate_pairing_code()
-            if self.pairing_repository.create(patient_id, hash_pairing_code(code), expires_at):
+            if self.pairing_repository.create(
+                patient_id, hash_pairing_code(code), expires_at, actor_uid
+            ):
                 audit_log("pairing_code_created", actor_uid, patient_id=patient_id)
                 return {"pairing_code": code, "expires_at": expires_at.isoformat()}
         raise PairingError("Unable to generate a pairing code right now. Please try again.")
@@ -67,7 +69,7 @@ class PairingService:
         for _ in range(_MAX_PIN_GENERATION_ATTEMPTS):
             pin = generate_pairing_pin()
             pin_hash = hash_pairing_code(pin)
-            if self.pairing_pin_repository.create(patient_id, pin_hash, expires_at):
+            if self.pairing_pin_repository.create(patient_id, pin_hash, expires_at, actor_uid):
                 audit_log("pairing_pin_created", actor_uid, patient_id=patient_id)
                 return {"pin": pin, "expires_at": expires_at.isoformat()}
 

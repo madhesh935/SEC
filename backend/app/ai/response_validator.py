@@ -60,6 +60,16 @@ def _sentence_count(text: str) -> int:
     return len([s for s in re.split(r"[.!?]+", text) if s.strip()])
 
 
+def truncate_to_sentences(text: str, max_sentences: int) -> str:
+    """Keep only the first `max_sentences` sentences, preserving their
+    original punctuation and spacing rather than discarding the whole
+    response over a purely cosmetic length overshoot."""
+    matches = list(re.finditer(r"[^.!?]+[.!?]+", text))
+    if not matches or len(matches) <= max_sentences:
+        return text.strip()
+    return text[: matches[max_sentences - 1].end()].strip()
+
+
 def validate_response(
     response_text: str,
     stage_policy: StagePolicy,

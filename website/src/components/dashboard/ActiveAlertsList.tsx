@@ -20,7 +20,6 @@ export function ActiveAlertsList({
   isLoading,
   isError,
   onAcknowledge,
-  onRetry,
 }: ActiveAlertsListProps) {
   if (isLoading) {
     return <LoadingState message="Loading active alerts..." />;
@@ -39,7 +38,7 @@ export function ActiveAlertsList({
       <EmptyState
         icon={BellRing}
         title="No active alerts"
-        description="All patient safety checks and behaviour thresholds are currently within nominal limits."
+        description="There are no active alerts recorded for this patient."
       />
     );
   }
@@ -56,3 +55,4 @@ export function ActiveAlertsList({
     </div>
   );
 }
+

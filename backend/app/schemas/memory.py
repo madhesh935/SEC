@@ -13,6 +13,7 @@ from app.schemas.family import FamilyMemberPublic
 
 
 class MemoryCreateRequest(BaseModel):
+    familyUserIds: list[str] = Field(default_factory=list, max_length=100)
     displayDate: str | None = Field(default=None, max_length=80)
     photoUrls: list[str] = Field(default_factory=list, max_length=20)
     title: str = Field(min_length=1, max_length=150)
@@ -34,6 +35,7 @@ class MemoryCreateRequest(BaseModel):
 
 
 class MemoryUpdateRequest(BaseModel):
+    familyUserIds: list[str] | None = Field(default=None, max_length=100)
     displayDate: str | None = Field(default=None, max_length=80)
     photoUrls: list[str] | None = Field(default=None, max_length=20)
     title: str | None = None
@@ -55,6 +57,7 @@ class MemoryUpdateRequest(BaseModel):
 
 
 class MemoryResponse(BaseModel):
+    familyUserIds: list[str] = Field(default_factory=list)
     displayDate: str | None = None
     photoUrls: list[str] = Field(default_factory=list)
     id: str
@@ -64,15 +67,15 @@ class MemoryResponse(BaseModel):
     category: str
     imageUrl: str | None = None
     audioUrl: str | None = None
-    sensitivity: str
-    approved: bool
-    useForRedirection: bool
-    aiMayKnowInternally: bool
-    aiMayMentionDirectly: bool
-    useForSafetyReasoning: bool
-    visibleToPatient: bool
-    visibleToCaregiver: bool
-    visibleToSelectedFamily: bool
+    sensitivity: str = MemorySensitivity.LOW.value
+    approved: bool = True
+    useForRedirection: bool = True
+    aiMayKnowInternally: bool = True
+    aiMayMentionDirectly: bool = False
+    useForSafetyReasoning: bool = False
+    visibleToPatient: bool = False
+    visibleToCaregiver: bool = True
+    visibleToSelectedFamily: bool = False
     emotionalTone: str | None = None
     associatedPeople: list[str] = Field(default_factory=list)
     createdAt: dt.datetime | None = None

@@ -18,7 +18,6 @@ export function FrequentlyRepeatedTopicsList({
   topics,
   isLoading,
   isError,
-  onRetry,
 }: FrequentlyRepeatedTopicsListProps) {
   if (isLoading) {
     return <LoadingState message="Loading repeated topics..." />;

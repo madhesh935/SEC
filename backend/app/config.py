@@ -30,7 +30,7 @@ class Settings(BaseSettings):
 
     llm_provider: str = Field(default="openrouter", alias="LLM_PROVIDER")
     llm_api_key: str = Field(default="", alias="LLM_API_KEY")
-    llm_model: str = Field(default="anthropic/claude-3.5-sonnet", alias="LLM_MODEL")
+    llm_model: str = Field(default="anthropic/claude-sonnet-5", alias="LLM_MODEL")
 
     embedding_model: str = Field(
         default="sentence-transformers/all-MiniLM-L6-v2", alias="EMBEDDING_MODEL"

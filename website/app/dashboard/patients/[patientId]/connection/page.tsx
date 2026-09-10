@@ -12,12 +12,9 @@ import { EmptyState } from "@/components/states/EmptyState";
 import { ErrorState } from "@/components/states/ErrorState";
 import { Button } from "@/components/ui/button";
 import {
-  Heart,
   MessageCircle,
-  Sparkles,
   Mic,
   Image as ImageIcon,
-  Clock,
   Lightbulb,
 } from "lucide-react";
 import Link from "next/link";

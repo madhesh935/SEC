@@ -17,8 +17,10 @@ class PairingRepository:
     def _collection(self):
         return db().collection("pairing_codes")
 
-    def create(self, patient_id: str, code_hash: str, expires_at: dt.datetime) -> bool:
-        return reserve_token(self._collection().document(code_hash), patient_id, expires_at)
+    def create(
+        self, patient_id: str, code_hash: str, expires_at: dt.datetime, issuer: str | None = None
+    ) -> bool:
+        return reserve_token(self._collection().document(code_hash), patient_id, expires_at, issuer)
 
     def consume(self, code_hash: str) -> dict[str, Any] | None:
         return consume_token(self._collection().document(code_hash))
@@ -46,8 +48,10 @@ class PairingPinRepository:
                 return None
         return data
 
-    def create(self, patient_id: str, pin_hash: str, expires_at: dt.datetime) -> bool:
-        return reserve_token(self._collection().document(pin_hash), patient_id, expires_at)
+    def create(
+        self, patient_id: str, pin_hash: str, expires_at: dt.datetime, issuer: str | None = None
+    ) -> bool:
+        return reserve_token(self._collection().document(pin_hash), patient_id, expires_at, issuer)
 
     def consume(self, pin_hash: str) -> dict[str, Any] | None:
         return consume_token(self._collection().document(pin_hash))
@@ -71,6 +75,22 @@ class CaregiverDeviceTokenRepository:
 
 
 class PatientDeviceRepository:
+    def list(self, patient_id):
+        docs = safe_call(patient_doc(patient_id).collection("devices").get)
+        return [doc_to_dict(d) for d in docs if d.exists]
+
+    def revoke(self, patient_id, device_id):
+        safe_call(
+            patient_doc(patient_id).collection("devices").document(device_id).update,
+            {"active": False},
+        )
+
+    def touch(self, patient_id, device_id):
+        safe_call(
+            patient_doc(patient_id).collection("devices").document(device_id).update,
+            {"lastSeenAt": server_timestamp()},
+        )
+
     def bind(self, patient_id: str, device_id: str) -> None:
         safe_call(
             patient_doc(patient_id).collection("devices").document(device_id).set,
@@ -83,7 +103,7 @@ class PatientDeviceRepository:
         return bool(data and data.get("active"))
 
 
-def reserve_token(ref, patient_id: str, expires_at: dt.datetime) -> bool:
+def reserve_token(ref, patient_id: str, expires_at: dt.datetime, issuer: str | None = None) -> bool:
     """Reserve a code atomically so concurrent caregivers cannot overwrite a live token."""
 
     @firestore.transactional
@@ -102,6 +122,7 @@ def reserve_token(ref, patient_id: str, expires_at: dt.datetime) -> bool:
                 "patientId": patient_id,
                 "expiresAt": expires_at,
                 "used": False,
+                "issuer": issuer,
                 "createdAt": server_timestamp(),
             },
         )

@@ -1,3 +1,4 @@
+import { useAuthStore } from "@/store/auth.store";
 import { LiveCompanionStatus, Alert } from "@/types";
 
 export type RealtimeCallback<T> = (data: T) => void;
@@ -19,10 +20,11 @@ export const realtimeService = {
    */
   subscribeToLiveStatus(
     patientId: string,
-    callback: RealtimeCallback<LiveCompanionStatus>
+    callback: RealtimeCallback<LiveCompanionStatus>,
+    onConnection?: (connected: boolean) => void
   ): UnsubscribeFn {
     const wsUrl = process.env.NEXT_PUBLIC_WS_BASE_URL;
-    const token = typeof window !== "undefined" ? localStorage.getItem("gericare_token") : null;
+    const token = typeof window !== "undefined" ? useAuthStore.getState().token : null;
     if (!wsUrl || !token || typeof window === "undefined") {
       // In offline/passive mode, return noop unsubscription
       return () => {};
@@ -32,6 +34,9 @@ export const realtimeService = {
       const socket = new WebSocket(
         `${wsUrl}/api/v1/patients/${patientId}/live-ws?token=${encodeURIComponent(token)}`
       );
+      socket.onopen = () => onConnection?.(true);
+      socket.onclose = () => onConnection?.(false);
+      socket.onerror = () => onConnection?.(false);
 
       socket.onmessage = (event) => {
         try {
@@ -57,7 +62,7 @@ export const realtimeService = {
    */
   subscribeToAlerts(callback: RealtimeCallback<Alert>): UnsubscribeFn {
     const wsUrl = process.env.NEXT_PUBLIC_WS_BASE_URL;
-    const token = typeof window !== "undefined" ? localStorage.getItem("gericare_token") : null;
+    const token = typeof window !== "undefined" ? useAuthStore.getState().token : null;
     if (!wsUrl || !token || typeof window === "undefined") {
       return () => {};
     }
@@ -84,3 +89,4 @@ export const realtimeService = {
     }
   },
 };
+

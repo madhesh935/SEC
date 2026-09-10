@@ -22,6 +22,17 @@ export interface AuthSession {
 // ==========================================
 export type DementiaStage = "EARLY" | "MID" | "LATE";
 
+export interface ComfortContentItem {
+  id: string;
+  resourceId: string;
+  type: "music" | "voice" | "photo" | "audio" | "memory";
+  title: string;
+  mediaUrl?: string | null;
+  imageUrl?: string | null;
+  durationSeconds?: number | null;
+  description?: string | null;
+}
+
 export interface EmergencyContact {
   name: string;
   relationship: string;
@@ -111,6 +122,7 @@ export type MemoryCategory =
   | "OTHER";
 
 export interface Memory {
+  familyUserIds?: string[];
   displayDate?: string;
   photoUrls?: string[];
   id: string;
@@ -267,6 +279,9 @@ export interface StrategyEffectivenessItem {
 // Consent & Privacy Types
 // ==========================================
 export interface ConsentSettings {
+  biographyUsage: boolean;
+  aiMayMentionMemoryDirectly: boolean;
+  patientMaySeeMemory: boolean;
   patientId: string;
   personalDataCollection: boolean;
   memoriesUsage: boolean;
@@ -302,3 +317,4 @@ export interface PaginatedResponse<T> {
   page: number;
   pageSize: number;
 }
+

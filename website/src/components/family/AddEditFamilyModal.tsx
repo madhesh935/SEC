@@ -2,6 +2,7 @@
 
 import * as React from "react";
 import { useParams } from "next/navigation";
+import { usePatientStore } from "@/store/patient.store";
 import { MediaUploader } from "@/components/media/MediaUploader";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
@@ -30,6 +31,7 @@ export function AddEditFamilyModal({
   isLoading = false,
 }: AddEditFamilyModalProps) {
   const params = useParams();
+  const selectedId = usePatientStore(s => s.selectedPatientId);
   const {
     setValue,
     register,
@@ -102,7 +104,7 @@ export function AddEditFamilyModal({
           Visible in patient app
         </label>
         <MediaUploader
-          patientId={params.patientId as string}
+          patientId={(params.patientId as string) || selectedId || undefined}
           onImageUploaded={(url) => setValue("photoUrl", url)}
           onAudioUploaded={(url) => setValue("voiceRecordingUrl", url)}
         />
@@ -182,3 +184,4 @@ export function AddEditFamilyModal({
     </Modal>
   );
 }
+

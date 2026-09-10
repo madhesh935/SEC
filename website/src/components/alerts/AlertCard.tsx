@@ -9,8 +9,6 @@ import {
   AlertTriangle,
   Info,
   Check,
-  CheckCircle2,
-  Clock,
   ArrowRight,
 } from "lucide-react";
 import Link from "next/link";
@@ -22,7 +20,7 @@ export interface AlertCardProps {
   onResolve?: (alertId: string) => void;
 }
 
-export function AlertCard({ alert, onAcknowledge, onResolve }: AlertCardProps) {
+export function AlertCard({ alert, onAcknowledge }: AlertCardProps) {
   const badgeInfo = getSeverityBadgeInfo(alert.severity);
 
   const getSeverityIcon = (severity: AlertSeverity) => {

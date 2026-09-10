@@ -2,8 +2,7 @@
 
 import * as React from "react";
 import { useMediaUpload } from "@/hooks/useMediaUpload";
-import { Upload, X, Image as ImageIcon, CheckCircle2, AlertCircle } from "lucide-react";
-import { Button } from "@/components/ui/button";
+import { X, Image as ImageIcon, AlertCircle } from "lucide-react";
 import { cn } from "@/utils/cn";
 
 export interface ImageUploaderProps {
