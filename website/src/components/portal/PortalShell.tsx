@@ -122,7 +122,7 @@ export function PortalShell({
   // Auth redirect guard
   React.useEffect(() => {
     if (!auth.isLoading && !auth.user && !auth.error) {
-      router.replace("/" + role + "/login");
+      router.replace(role === "family" ? "/family/login" : "/login");
     }
   }, [auth.isLoading, auth.user, auth.error, role, router]);
 
@@ -178,7 +178,7 @@ export function PortalShell({
     await authService.logout();
     cache.clear();
     useAuthStore.getState().clearSession();
-    router.replace("/" + role + "/login");
+    router.replace(role === "family" ? "/family/login" : "/login");
   }
 
   if (auth.isLoading) {
@@ -208,7 +208,7 @@ export function PortalShell({
           {auth.error}
         </p>
         <div className="flex gap-3">
-          <Link className="px-4 py-2 bg-teal-600 hover:bg-teal-700 text-white text-xs font-semibold rounded-xl" href={"/" + role + "/login"}>
+          <Link className="px-4 py-2 bg-teal-600 hover:bg-teal-700 text-white text-xs font-semibold rounded-xl" href={role === "family" ? "/family/login" : "/login"}>
             Return to sign in
           </Link>
           <button
