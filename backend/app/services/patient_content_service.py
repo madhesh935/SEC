@@ -28,8 +28,10 @@ class PatientContentService:
     def media_url(self, url: str | None) -> str | None:
         if not url:
             return None
+        if url.startswith("/static/"):
+            return url
         parsed = urlparse(url)
-        if parsed.scheme != "https":
+        if parsed.scheme not in ("https", "http"):
             return None
         bucket = get_settings().firebase_storage_bucket
         path = None

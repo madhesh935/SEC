@@ -36,6 +36,7 @@ export default function Family() {
               <PatientImage
                 url={member.photoUrl}
                 label={member.name}
+                category="family"
                 height={84}
                 style={{ width: 76 }}
               />

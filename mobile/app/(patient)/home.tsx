@@ -51,8 +51,8 @@ const shortcuts = [
   },
   {
     route: "/activities",
-    title: "Games",
-    description: "Gentle mind activities",
+    title: "Joyful Games",
+    description: "Playful & calming mind fun",
     Icon: Puzzle,
     tone: "lavender",
   },

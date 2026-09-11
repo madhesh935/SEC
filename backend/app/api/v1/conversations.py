@@ -10,7 +10,7 @@ from fastapi import APIRouter, Depends, File, Form, UploadFile
 from app.core.exceptions import AuthorizationError
 from app.core.rate_limit import voice_upload_limiter
 from app.core.security import AuthenticatedDevice
-from app.dependencies import get_current_device
+from app.dependencies import get_current_device, get_conversation_service
 from app.schemas.conversation import (
     ConversationResponse,
     HelpContacts,
@@ -34,9 +34,9 @@ def _ensure_own_patient(device: AuthenticatedDevice, patient_id: str) -> None:
 async def text_conversation(
     payload: TextConversationRequest,
     device: AuthenticatedDevice = Depends(get_current_device),
+    service: ConversationService = Depends(get_conversation_service),
 ) -> ConversationResponse:
     _ensure_own_patient(device, payload.patientId)
-    service = ConversationService()
     result = await service.process_text(payload.patientId, payload.conversationId, payload.text)
     return ConversationResponse(**result.model_dump())
 
@@ -47,6 +47,7 @@ async def voice_conversation(
     conversationId: str | None = Form(default=None),
     audio: UploadFile = File(...),
     device: AuthenticatedDevice = Depends(get_current_device),
+    service: ConversationService = Depends(get_conversation_service),
 ) -> ConversationResponse:
     _ensure_own_patient(device, patientId)
     voice_upload_limiter.check(device.device_id)
@@ -54,7 +55,6 @@ async def voice_conversation(
     audio_bytes = await audio.read(MAX_VOICE_UPLOAD_BYTES + 1)
     validate_voice_upload(audio.content_type, len(audio_bytes))
 
-    service = ConversationService()
     result = await service.process_voice(
         patientId,
         conversationId,
@@ -70,9 +70,9 @@ async def request_help(
     patient_id: str,
     payload: HelpRequestPayload | None = None,
     device: AuthenticatedDevice = Depends(get_current_device),
+    service: ConversationService = Depends(get_conversation_service),
 ) -> RequestHelpResponse:
     _ensure_own_patient(device, patient_id)
-    service = ConversationService()
     result = service.create_help_request(patient_id, reason=payload.reason if payload else None)
     return RequestHelpResponse(**result)
 
@@ -81,7 +81,7 @@ async def request_help(
 async def get_help_contacts(
     patient_id: str,
     device: AuthenticatedDevice = Depends(get_current_device),
+    service: ConversationService = Depends(get_conversation_service),
 ) -> HelpContacts:
     _ensure_own_patient(device, patient_id)
-    service = ConversationService()
     return HelpContacts(**service.get_help_contacts(patient_id))

@@ -1,10 +1,20 @@
 import { conversationSchema } from "./contracts";
 import { Platform } from "react-native";
 import { apiClient } from "./api";
+import { CONFIG } from "../constants/config";
 import {
   VoiceConversationPayload,
   VoiceConversationResponse,
 } from "../types/conversation";
+
+// TTS now writes audio to the backend's local /static mount (see
+// app/main.py) instead of a Firebase-signed absolute URL, so the server
+// returns a path like "/static/media/responses/xyz.wav" - resolve it
+// against the API host before handing it to the audio player.
+function resolveMediaUrl<T extends string | null | undefined>(url: T): T {
+  if (!url || !url.startsWith("/")) return url;
+  return (CONFIG.API_BASE_URL.replace(/\/$/, "") + url) as T;
+}
 
 export const conversationService = {
   async sendVoiceConversation(
@@ -56,6 +66,22 @@ export const conversationService = {
       },
     );
 
-    return conversationSchema.parse(response.data);
+    const parsed = conversationSchema.parse(response.data);
+    return {
+      ...parsed,
+      responseAudioUrl: resolveMediaUrl(parsed.responseAudioUrl),
+      contextMedia: parsed.contextMedia
+        ? {
+            ...parsed.contextMedia,
+            imageUrl: resolveMediaUrl(parsed.contextMedia.imageUrl),
+            audioUrl: resolveMediaUrl(parsed.contextMedia.audioUrl),
+          }
+        : parsed.contextMedia,
+      actions: parsed.actions.map((action) => ({
+        ...action,
+        imageUrl: resolveMediaUrl(action.imageUrl),
+        audioUrl: resolveMediaUrl(action.audioUrl),
+      })),
+    };
   },
 };

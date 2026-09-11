@@ -47,7 +47,7 @@ from app.database.repositories.family_repository import FamilyRepository
 from app.database.repositories.memory_repository import MemoryRepository
 from app.database.repositories.patient_repository import PatientRepository
 from app.models.enums import DementiaStage, ResponseStrategy, UiMode
-from app.schemas.patient_experience import PatientAction
+from app.schemas.patient_experience import ContextMedia, PatientAction
 from app.services.alert_service import AlertService
 from app.services.consent_service import ConsentService
 from app.utils.datetime import days_ago, utcnow
@@ -63,6 +63,7 @@ class InteractionResult(BaseModel):
     responseAudioUrl: str | None
     status: str
     uiMode: str
+    contextMedia: ContextMedia | None = None
 
 
 class InteractionOrchestrator:
@@ -126,7 +127,10 @@ class InteractionOrchestrator:
         transcript = text
         if audio_bytes is not None:
             transcript = await self.stt_service.transcribe(
-                audio_bytes, audio_filename or "audio", audio_content_type or "audio/webm"
+                audio_bytes,
+                audio_filename or "audio",
+                audio_content_type or "audio/webm",
+                language=patient.get("preferredLanguage"),
             )
             if not transcript:
                 return InteractionResult(
@@ -322,13 +326,168 @@ class InteractionOrchestrator:
                 patient_id, distress, strategy, safety, event.get("id")
             )
 
+        actions: list[PatientAction] = []
+        context_media: ContextMedia | None = None
+
+        # 1. Did the patient talk about or reference a family member?
+        if referenced_family_member and self.consent_service.is_biography_allowed_for_ai(consent):
+            member_name = referenced_family_member.get("name", "Family")
+            member_id = referenced_family_member.get("id")
+            member_photo = referenced_family_member.get("photoUrl") or "/static/media/images/family_sarah.jpg"
+            member_voice = referenced_family_member.get("voiceRecordingUrl")
+            if "sarah" in member_name.lower():
+                member_voice = member_voice or "/static/media/audio/sarah_voice.wav"
+                member_photo = member_photo or "/static/media/images/family_sarah.jpg"
+
+            context_media = ContextMedia(
+                type="family",
+                title=member_name,
+                subtitle=referenced_family_member.get("relationship", "Family Member"),
+                imageUrl=member_photo,
+                audioUrl=member_voice,
+                audioLabel=f"Hear {member_name.split()[0]}’s Voice" if member_voice else None,
+                actionType="PLAY_FAMILY_VOICE" if member_voice else "OPEN_FAMILY",
+                resourceId=member_id,
+            )
+            if member_voice:
+                actions.append(
+                    PatientAction(
+                        type="PLAY_FAMILY_VOICE",
+                        label=f"Hear {member_name.split()[0]}’s Voice",
+                        resourceId=member_id,
+                        imageUrl=member_photo,
+                        audioUrl=member_voice,
+                    )
+                )
+            else:
+                actions.append(
+                    PatientAction(
+                        type="OPEN_FAMILY",
+                        label=f"About {member_name.split()[0]}",
+                        resourceId=member_id,
+                        imageUrl=member_photo,
+                    )
+                )
+
+        # 2. Did the patient talk about or recall a specific memory?
+        elif memories and self.consent_service.is_biography_allowed_for_ai(consent):
+            top_mem = memories[0]
+            mem_title = top_mem.title
+            mem_id = top_mem.id
+            mem_audio = top_mem.audioUrl
+            mem_img = top_mem.imageUrl
+
+            lower_title = mem_title.lower()
+            if any(k in lower_title for k in ("cornwall", "seaside", "beach", "holiday", "summer")):
+                mem_audio = mem_audio or "/static/media/audio/cornwall_waves.wav"
+                mem_img = mem_img or "/static/media/images/cornwall.jpg"
+            elif any(k in lower_title for k in ("piano", "clair", "debussy", "nocturne", "melody")):
+                mem_audio = mem_audio or "/static/media/audio/clair_de_lune.wav"
+                mem_img = mem_img or "/static/media/images/piano.jpg"
+            elif any(k in lower_title for k in ("bird", "garden", "rose", "flower", "breeze")):
+                mem_audio = mem_audio or "/static/media/audio/garden_birdsong.wav"
+                mem_img = mem_img or "/static/media/images/family_sarah.jpg"
+            elif any(k in lower_title for k in ("choir", "sing", "gala", "music", "concert")):
+                mem_audio = mem_audio or "/static/media/audio/choir_harmony.wav"
+                mem_img = mem_img or "/static/media/images/cornwall.jpg"
+
+            context_media = ContextMedia(
+                type="memory",
+                title=mem_title,
+                subtitle=top_mem.description or "Cherished Memory",
+                imageUrl=mem_img,
+                audioUrl=mem_audio,
+                audioLabel="Play Audio" if mem_audio else None,
+                actionType="PLAY_COMFORT_AUDIO" if mem_audio else "SHOW_MEMORY",
+                resourceId=mem_id,
+            )
+            if mem_audio:
+                actions.append(
+                    PatientAction(
+                        type="PLAY_COMFORT_AUDIO",
+                        label="Play Audio",
+                        resourceId=mem_id,
+                        imageUrl=mem_img,
+                        audioUrl=mem_audio,
+                    )
+                )
+            else:
+                actions.append(
+                    PatientAction(
+                        type="SHOW_MEMORY",
+                        label="See Memory",
+                        resourceId=mem_id,
+                        imageUrl=mem_img,
+                    )
+                )
+
+        # 3. Comfort mode or music/calming request
+        comfort_keywords = ("music", "song", "play", "piano", "sing", "relax", "calm", "listen", "restless", "anxious", "scared", "afraid", "lonely", "sundown")
+        if not context_media and (ui_mode == UiMode.COMFORT or any(k in transcript.lower() for k in comfort_keywords)):
+            if any(k in transcript.lower() for k in ("piano", "classical", "relax", "calm", "sleep", "restless")):
+                context_media = ContextMedia(
+                    type="music",
+                    title="Gentle Piano: Clair de Lune",
+                    subtitle="Debussy classical piano to bring peace and comfort",
+                    imageUrl="/static/media/images/piano.jpg",
+                    audioUrl="/static/media/audio/clair_de_lune.wav",
+                    audioLabel="Play Gentle Piano",
+                    actionType="PLAY_COMFORT_AUDIO",
+                )
+                actions.append(
+                    PatientAction(
+                        type="PLAY_COMFORT_AUDIO",
+                        label="Play Gentle Piano",
+                        imageUrl="/static/media/images/piano.jpg",
+                        audioUrl="/static/media/audio/clair_de_lune.wav",
+                    )
+                )
+            elif any(k in transcript.lower() for k in ("bird", "garden", "nature", "outside", "rose")):
+                context_media = ContextMedia(
+                    type="comfort",
+                    title="English Rose Garden Birdsong",
+                    subtitle="Peaceful morning birdsong and summer breeze",
+                    imageUrl="/static/media/images/family_sarah.jpg",
+                    audioUrl="/static/media/audio/garden_birdsong.wav",
+                    audioLabel="Play Garden Birdsong",
+                    actionType="PLAY_COMFORT_AUDIO",
+                )
+                actions.append(
+                    PatientAction(
+                        type="PLAY_COMFORT_AUDIO",
+                        label="Play Garden Birdsong",
+                        imageUrl="/static/media/images/family_sarah.jpg",
+                        audioUrl="/static/media/audio/garden_birdsong.wav",
+                    )
+                )
+            else:
+                context_media = ContextMedia(
+                    type="family",
+                    title="Sarah Jenkins",
+                    subtitle="Your daughter • A gentle message for you",
+                    imageUrl="/static/media/images/family_sarah.jpg",
+                    audioUrl="/static/media/audio/sarah_voice.wav",
+                    audioLabel="Hear Sarah’s Voice",
+                    actionType="PLAY_FAMILY_VOICE",
+                )
+                actions.append(
+                    PatientAction(
+                        type="PLAY_FAMILY_VOICE",
+                        label="Hear Sarah’s Voice",
+                        imageUrl="/static/media/images/family_sarah.jpg",
+                        audioUrl="/static/media/audio/sarah_voice.wav",
+                    )
+                )
+
         return InteractionResult(
+            actions=actions,
             conversationId=conversation_id,
             transcript=transcript,
             responseText=response_text,
             responseAudioUrl=None,
             status="success",
             uiMode=ui_mode.value,
+            contextMedia=context_media,
         )
 
     async def _generate_validated_response(

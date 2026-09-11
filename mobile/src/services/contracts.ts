@@ -52,9 +52,27 @@ export const actionSchema = z.object({
   ]),
   label: z.string(),
   resourceId: optionalText,
+  imageUrl: optionalText,
+  audioUrl: optionalText,
+});
+export const contextMediaSchema = z.object({
+  type: z.enum(["family", "memory", "comfort", "music"]),
+  title: z.string(),
+  subtitle: optionalText,
+  imageUrl: optionalText,
+  audioUrl: optionalText,
+  audioLabel: optionalText,
+  actionType: optionalText,
+  resourceId: optionalText,
 });
 export const recommendationSchema = z
-  .object({ title: z.string(), action: actionSchema })
+  .object({
+    title: z.string(),
+    subtitle: optionalText,
+    imageUrl: optionalText,
+    audioUrl: optionalText,
+    action: actionSchema,
+  })
   .nullable();
 export const conversationSchema = z.object({
   conversationId: z.string(),
@@ -64,6 +82,7 @@ export const conversationSchema = z.object({
   status: z.string(),
   uiMode: z.enum(["normal", "comfort", "caregiver_notified"]),
   actions: z.array(actionSchema),
+  contextMedia: contextMediaSchema.nullable().optional(),
 });
 export const activityTypeSchema = z.enum([
   "family_recognition",

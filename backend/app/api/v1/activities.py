@@ -11,7 +11,7 @@ from fastapi import APIRouter, Depends
 
 from app.ai.llm_service import LLMService
 from app.core.exceptions import LLMServiceError
-from app.dependencies import PatientAccessContext, get_patient_access_context
+from app.dependencies import PatientAccessContext, get_memory_service, get_patient_access_context
 from app.schemas.activity import ActivityRecommendation, FamilyPromptItem
 from app.schemas.patient_experience import ActivityDetail, ActivityFeedback, ActivitySubmission
 from app.services.activity_service import ActivityService
@@ -50,6 +50,7 @@ async def submit_activity_result(
 @family_prompt_router.get("", response_model=list[FamilyPromptItem])
 async def family_prompts(
     context: PatientAccessContext = Depends(get_patient_access_context),
+    memory_service: MemoryService = Depends(get_memory_service),
 ) -> list[FamilyPromptItem]:
     patient_id = context.patient["id"]
     consent_service = ConsentService()
@@ -57,7 +58,6 @@ async def family_prompts(
     if not consent_service.is_biography_allowed_for_ai(consent):
         return []
 
-    memory_service = MemoryService()
     memories = [
         m
         for m in memory_service.memory_repository.list_ai_usable(patient_id)

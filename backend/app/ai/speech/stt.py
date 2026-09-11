@@ -15,6 +15,7 @@ from typing import TYPE_CHECKING, Any
 from app.config import get_settings
 from app.core.exceptions import SpeechRecognitionError
 from app.core.logging import get_logger
+from app.utils.language import normalize_language_code
 
 if TYPE_CHECKING:
     from faster_whisper import WhisperModel
@@ -45,19 +46,36 @@ class SpeechToTextService:
         logger.info("whisper_model_loaded", model=model_size)
         return SpeechToTextService._model
 
-    async def transcribe(self, audio_bytes: bytes, filename: str, content_type: str) -> str | None:
+    async def transcribe(
+        self,
+        audio_bytes: bytes,
+        filename: str,
+        content_type: str,
+        language: str | None = None,
+    ) -> str | None:
         """Returns the transcript, or None if speech could not be understood.
-        Never fabricates a transcript on failure (spec section 73)."""
+        Never fabricates a transcript on failure (spec section 73).
+
+        `language` should be the patient's known preferred language. Passing
+        it skips Whisper's auto-detection pass, which is unreliable on short
+        clips (a 2-second recording has previously been misidentified as
+        Portuguese at 33% confidence) - since we already know the patient's
+        language, there's no reason to guess it."""
         try:
-            return await asyncio.to_thread(self._transcribe_sync, audio_bytes)
+            return await asyncio.to_thread(self._transcribe_sync, audio_bytes, language)
         except SpeechRecognitionError:
             raise
         except Exception as exc:
             logger.warning("stt_error", error=str(exc))
             raise SpeechRecognitionError("Speech recognition service returned an error.") from exc
 
-    def _transcribe_sync(self, audio_bytes: bytes) -> str | None:
+    def _transcribe_sync(self, audio_bytes: bytes, language: str | None) -> str | None:
         model = self._load()
-        segments, _info = model.transcribe(BytesIO(audio_bytes), beam_size=1, vad_filter=True)
+        segments, _info = model.transcribe(
+            BytesIO(audio_bytes),
+            beam_size=1,
+            vad_filter=True,
+            language=normalize_language_code(language) if language else None,
+        )
         transcript = "".join(segment.text for segment in segments).strip()
         return transcript or None

@@ -53,7 +53,27 @@ class ConversationService:
     async def process_text(
         self, patient_id: str, conversation_id: str | None, text: str
     ) -> InteractionResult:
-        return await self.orchestrator.process_interaction(patient_id, conversation_id, text=text)
+        result = await self.orchestrator.process_interaction(patient_id, conversation_id, text=text)
+        if not result.actions and result.uiMode == "comfort":
+            patient = self.patient_repository.get(patient_id)
+            if patient:
+                recommendation = PatientExperienceService().recommendation(patient)
+                if recommendation:
+                    result.actions = [recommendation.action]
+                    if not result.contextMedia and (recommendation.imageUrl or recommendation.audioUrl):
+                        from app.schemas.patient_experience import ContextMedia
+
+                        result.contextMedia = ContextMedia(
+                            type="comfort",
+                            title=recommendation.title,
+                            subtitle=recommendation.subtitle,
+                            imageUrl=recommendation.imageUrl,
+                            audioUrl=recommendation.audioUrl,
+                            audioLabel=recommendation.action.label,
+                            actionType=recommendation.action.type,
+                            resourceId=recommendation.action.resourceId,
+                        )
+        return result
 
     async def process_voice(
         self,
@@ -82,10 +102,23 @@ class ConversationService:
                 )
             except ExternalServiceError:
                 result.status = "tts_unavailable"
-            if result.uiMode == "comfort":
+            if not result.actions and result.uiMode == "comfort":
                 recommendation = PatientExperienceService().recommendation(patient)
                 if recommendation:
                     result.actions = [recommendation.action]
+                    if not result.contextMedia and (recommendation.imageUrl or recommendation.audioUrl):
+                        from app.schemas.patient_experience import ContextMedia
+
+                        result.contextMedia = ContextMedia(
+                            type="comfort",
+                            title=recommendation.title,
+                            subtitle=recommendation.subtitle,
+                            imageUrl=recommendation.imageUrl,
+                            audioUrl=recommendation.audioUrl,
+                            audioLabel=recommendation.action.label,
+                            actionType=recommendation.action.type,
+                            resourceId=recommendation.action.resourceId,
+                        )
         return result
 
     def create_help_request(self, patient_id: str, reason: str | None = None) -> dict:

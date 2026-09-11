@@ -7,7 +7,7 @@ from typing import Literal
 
 from pydantic import BaseModel, Field
 
-from app.schemas.patient_experience import PatientAction
+from app.schemas.patient_experience import ContextMedia, PatientAction
 
 
 class TextConversationRequest(BaseModel):
@@ -24,6 +24,7 @@ class ConversationResponse(BaseModel):
     responseAudioUrl: str | None = None
     status: Literal["success", "ai_disabled", "speech_not_understood", "tts_unavailable"]
     uiMode: Literal["normal", "comfort", "caregiver_notified"]
+    contextMedia: ContextMedia | None = None
 
 
 class HelpRequestPayload(BaseModel):

@@ -22,8 +22,8 @@ export default function More() {
         onPress={() => router.push("/comfort")}
       />
       <MenuCard
-        title="Games"
-        description="Gentle mind activities"
+        title="Joyful Games"
+        description="Playful & calming mind fun"
         tone="lavender"
         icon={<Puzzle color="#7350A3" />}
         onPress={() => router.push("/activities")}

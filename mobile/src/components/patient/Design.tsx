@@ -17,6 +17,12 @@ import {
   Leaf,
   Image as ImageIcon,
   RefreshCw,
+  Flower2,
+  Music,
+  Sun,
+  Coffee,
+  Sparkles,
+  User,
 } from "lucide-react-native";
 import Svg, { Path, G } from "react-native-svg";
 import { useSettingsStore } from "../../store/settings.store";
@@ -383,43 +389,221 @@ export function QueryState({
     );
   return <>{children}</>;
 }
+export function getContextualImage(label: string = "", category?: string) {
+  const text = `${label} ${category || ""}`.toLowerCase();
+
+  // 1. Nature, Rose, Garden, Flower, Bird, Tree, Bloom
+  if (
+    text.includes("rose") ||
+    text.includes("garden") ||
+    text.includes("flower") ||
+    text.includes("bloom") ||
+    text.includes("bird") ||
+    text.includes("plant") ||
+    text.includes("tree") ||
+    text.includes("spring") ||
+    text.includes("nature")
+  ) {
+    return {
+      icon: Flower2,
+      fallbackUrl:
+        "https://images.unsplash.com/photo-1518709268805-4e9042af9f23?auto=format&fit=crop&w=800&q=80",
+      tone: "mint" as Tone,
+      iconColor: palette.teal,
+      badgeLabel: "Garden & Nature",
+    };
+  }
+
+  // 2. Music, Piano, Choir, Song, Melody, Concert, Clair de Lune, Nocturne, Singer
+  if (
+    text.includes("piano") ||
+    text.includes("choir") ||
+    text.includes("music") ||
+    text.includes("melody") ||
+    text.includes("song") ||
+    text.includes("concert") ||
+    text.includes("gala") ||
+    text.includes("clair de lune") ||
+    text.includes("nocturne") ||
+    text.includes("mozart") ||
+    text.includes("sound") ||
+    text.includes("audio")
+  ) {
+    return {
+      icon: Music,
+      fallbackUrl:
+        "https://images.unsplash.com/photo-1520523839898-50712825e3a7?auto=format&fit=crop&w=800&q=80",
+      tone: "peach" as Tone,
+      iconColor: "#E67E22",
+      badgeLabel: "Music & Melody",
+    };
+  }
+
+  // 3. Seaside, Beach, Holiday, Cornwall, Ocean, Waves, Vacation, Coast
+  if (
+    text.includes("cornwall") ||
+    text.includes("beach") ||
+    text.includes("sea") ||
+    text.includes("ocean") ||
+    text.includes("holiday") ||
+    text.includes("summer") ||
+    text.includes("coast") ||
+    text.includes("water") ||
+    text.includes("lake") ||
+    text.includes("sand") ||
+    text.includes("travel")
+  ) {
+    return {
+      icon: Sun,
+      fallbackUrl:
+        "https://images.unsplash.com/photo-1507525428034-b723cf961d3e?auto=format&fit=crop&w=800&q=80",
+      tone: "blue" as Tone,
+      iconColor: "#2980B9",
+      badgeLabel: "Seaside & Travel",
+    };
+  }
+
+  // 4. Food, Scones, Baking, Tea, Kitchen, Breakfast, Meal, Lemon
+  if (
+    text.includes("scone") ||
+    text.includes("baking") ||
+    text.includes("bake") ||
+    text.includes("tea") ||
+    text.includes("kitchen") ||
+    text.includes("lemon") ||
+    text.includes("food") ||
+    text.includes("cook") ||
+    text.includes("breakfast")
+  ) {
+    return {
+      icon: Coffee,
+      fallbackUrl:
+        "https://images.unsplash.com/photo-1509440159596-0249088772ff?auto=format&fit=crop&w=800&q=80",
+      tone: "peach" as Tone,
+      iconColor: "#D35400",
+      badgeLabel: "Cozy Kitchen",
+    };
+  }
+
+  // 5. Family, Daughter, Husband, Granddaughter, Son, Sarah, Sophia, David, Robert
+  if (
+    text.includes("sarah") ||
+    text.includes("sophia") ||
+    text.includes("david") ||
+    text.includes("robert") ||
+    text.includes("daughter") ||
+    text.includes("husband") ||
+    text.includes("granddaughter") ||
+    text.includes("family") ||
+    text.includes("friend") ||
+    text.includes("loved") ||
+    text.includes("caregiver")
+  ) {
+    return {
+      icon: Heart,
+      fallbackUrl:
+        "https://images.unsplash.com/photo-1544005313-94ddf0286df2?auto=format&fit=crop&w=800&q=80",
+      tone: "rose" as Tone,
+      iconColor: "#E84393",
+      badgeLabel: "Loved One",
+    };
+  }
+
+  // Default / General Cherished Memory
+  return {
+    icon: Sparkles,
+    fallbackUrl:
+      "https://images.unsplash.com/photo-1506744038136-46273834b3fb?auto=format&fit=crop&w=800&q=80",
+    tone: "mint" as Tone,
+    iconColor: palette.teal,
+    badgeLabel: "Cherished Moment",
+  };
+}
+
 export function PatientImage({
   url,
   label,
+  category,
   height = 180,
   style,
 }: {
   url?: string | null;
   label: string;
+  category?: string;
   height?: number;
   style?: ViewStyle;
 }) {
-  const [failed, setFailed] = useState(false),
-    [loading, setLoading] = useState(true);
+  const context = getContextualImage(label, category);
+
+  // Substitute local unreachable / broken placeholder URLs with context fallback
+  const isInvalidOrLocalUrl =
+    !url ||
+    url.includes("127.0.0.1") ||
+    url.includes("localhost");
+
+  const effectiveUrl = isInvalidOrLocalUrl ? context.fallbackUrl : url;
+
+  const [failed, setFailed] = useState(false);
+  const [loading, setLoading] = useState(true);
+
   React.useEffect(() => {
     setFailed(false);
     setLoading(true);
-  }, [url]);
+  }, [effectiveUrl]);
+
+  const Icon = context.icon;
+
   return (
     <View
       style={[
         {
           height,
-          backgroundColor: palette.mint,
+          backgroundColor: palette[context.tone] || palette.mint,
           borderRadius: 18,
           overflow: "hidden",
           alignItems: "center",
           justifyContent: "center",
+          position: "relative",
         },
         style,
       ]}
     >
-      {(!url || failed || loading) && (
-        <ImageIcon color={palette.teal} size={30} />
+      {/* Contextual Card Fallback / Loading state */}
+      {(!effectiveUrl || failed || loading) && (
+        <View
+          style={{
+            alignItems: "center",
+            justifyContent: "center",
+            gap: 6,
+            padding: 8,
+          }}
+        >
+          <View
+            style={{
+              width: Math.min(height * 0.45, 52),
+              height: Math.min(height * 0.45, 52),
+              borderRadius: Math.min(height * 0.225, 26),
+              backgroundColor: "rgba(255,255,255,0.85)",
+              alignItems: "center",
+              justifyContent: "center",
+            }}
+          >
+            <Icon color={context.iconColor} size={Math.min(height * 0.25, 26)} />
+          </View>
+          <Copy
+            size={13}
+            bold
+            style={{ color: context.iconColor, textAlign: "center" }}
+          >
+            {context.badgeLabel}
+          </Copy>
+        </View>
       )}
-      {url && !failed && (
+
+      {/* Actual / Context-Matched Image */}
+      {effectiveUrl && !failed && (
         <Image
-          source={{ uri: url }}
+          source={{ uri: effectiveUrl }}
           accessibilityLabel={label}
           accessible
           contentFit="cover"

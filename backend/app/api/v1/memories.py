@@ -7,6 +7,7 @@ from app.dependencies import (
     PatientAccessContext,
     authorize_patient_access,
     get_current_user,
+    get_memory_service,
     get_patient_access_context,
 )
 from app.schemas.memory import (
@@ -31,8 +32,8 @@ async def list_memories(
     category: str | None = Query(default=None),
     sensitivity: str | None = Query(default=None),
     approved: bool | None = Query(default=None),
+    service: MemoryService = Depends(get_memory_service),
 ) -> list[MemoryResponse] | list[PatientMemoryPublic]:
-    service = MemoryService()
     if context.is_device:
         visible = PatientContentService(context.patient).memories()
         return [m for m in visible if category is None or m.category == category]
@@ -52,8 +53,8 @@ async def create_memory(
     payload: MemoryCreateRequest,
     user: AuthenticatedUser = Depends(get_current_user),
     patient: dict = Depends(authorize_patient_access),
+    service: MemoryService = Depends(get_memory_service),
 ) -> MemoryResponse:
-    service = MemoryService()
     created = service.create_memory(user.uid, patient["id"], payload)
     return _to_memory_response(created, patient["id"])
 
@@ -62,8 +63,8 @@ async def create_memory(
 async def get_memory(
     memory_id: str,
     context: PatientAccessContext = Depends(get_patient_access_context),
+    service: MemoryService = Depends(get_memory_service),
 ) -> MemoryResponse | PatientMemoryPublic:
-    service = MemoryService()
     memory = service.get_memory(context.patient["id"], memory_id)
 
     if context.is_device:
@@ -78,8 +79,8 @@ async def update_memory(
     payload: MemoryUpdateRequest,
     user: AuthenticatedUser = Depends(get_current_user),
     patient: dict = Depends(authorize_patient_access),
+    service: MemoryService = Depends(get_memory_service),
 ) -> MemoryResponse:
-    service = MemoryService()
     updated = service.update_memory(user.uid, patient["id"], memory_id, payload)
     return _to_memory_response(updated, patient["id"])
 
@@ -89,6 +90,6 @@ async def delete_memory(
     memory_id: str,
     user: AuthenticatedUser = Depends(get_current_user),
     patient: dict = Depends(authorize_patient_access),
+    service: MemoryService = Depends(get_memory_service),
 ) -> None:
-    service = MemoryService()
     service.delete_memory(user.uid, patient["id"], memory_id)

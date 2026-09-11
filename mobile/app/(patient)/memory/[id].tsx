@@ -40,6 +40,7 @@ export default function MemoryDetail() {
             <PatientImage
               url={memory.imageUrl}
               label={memory.title}
+              category={memory.category}
               height={250}
             />
             <Copy size={28} bold>
@@ -122,6 +123,7 @@ export default function MemoryDetail() {
                 key={url}
                 url={url}
                 label={memory?.title || "Memory photo"}
+                category={memory?.category}
                 height={330}
               />
             ))}

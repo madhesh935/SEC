@@ -23,10 +23,26 @@ class PatientAction(BaseModel):
     ]
     label: str
     resourceId: str | None = None
+    imageUrl: str | None = None
+    audioUrl: str | None = None
+
+
+class ContextMedia(BaseModel):
+    type: Literal["family", "memory", "comfort", "music"]
+    title: str
+    subtitle: str | None = None
+    imageUrl: str | None = None
+    audioUrl: str | None = None
+    audioLabel: str | None = None
+    actionType: str | None = None
+    resourceId: str | None = None
 
 
 class HomeRecommendation(BaseModel):
     title: str
+    subtitle: str | None = None
+    imageUrl: str | None = None
+    audioUrl: str | None = None
     action: PatientAction
 
 

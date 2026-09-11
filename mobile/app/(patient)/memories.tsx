@@ -88,6 +88,7 @@ export default function Memories() {
               <PatientImage
                 url={memory.imageUrl}
                 label={memory.title}
+                category={memory.category}
                 height={columns === 1 ? 200 : 145}
               />
               <View style={{ padding: 6, gap: 5 }}>

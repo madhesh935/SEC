@@ -12,6 +12,7 @@ import { CompanionOrb } from "../../src/components/companion/CompanionOrb";
 import { ContextAction } from "../../src/components/patient/ContextAction";
 import { useCompanionVoice } from "../../src/hooks/useCompanionVoice";
 import { useNetwork } from "../../src/hooks/useNetwork";
+import { PatientAction } from "../../src/services/contracts";
 export default function Companion() {
   const voice = useCompanionVoice(),
     { isOffline } = useNetwork(),
@@ -112,7 +113,7 @@ export default function Companion() {
           onPress={voice.replay}
         />
       )}
-      {voice.response?.actions.map((action, index) => (
+      {voice.response?.actions.map((action: PatientAction, index: number) => (
         <ContextAction key={action.type + index} action={action} />
       ))}
       {!comfort && !!voice.response?.transcript && (

@@ -28,12 +28,13 @@ from app.services.patient_content_service import PatientContentService
 
 
 class FamilyPortalService:
-    def __init__(self):
+    def __init__(self, memory_service: MemoryService | None = None):
         self.access = AccessRepository()
         self.invitations = InvitationRepository()
         self.patients = PatientRepository()
         self.users = UserRepository()
         self.memories = MemoryRepository()
+        self.memory_service = memory_service
 
     def invite(self, patient: dict, issuer: str, payload: InvitationRequest):
         token = secrets.token_urlsafe(32)
@@ -153,7 +154,12 @@ class FamilyPortalService:
             useForRedirection=False,
             visibleToSelectedFamily=False,
         )
-        memory = MemoryService().create_memory(uid, pid, request)
+        memory_service = self.memory_service
+        if memory_service is None:
+            from app.dependencies import get_memory_service
+
+            memory_service = get_memory_service()
+        memory = memory_service.create_memory(uid, pid, request)
         return next(m for m in self.shared_memories(uid, pid) if m.id == memory["id"])
 
     def suggestions(self, uid: str, pid: str):

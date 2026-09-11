@@ -144,6 +144,13 @@ def create_app() -> FastAPI:
         overall = "ok" if all(v == "ok" for v in checks.values()) else "degraded"
         return {"status": overall, "checks": checks}
 
+    from pathlib import Path
+    from fastapi.staticfiles import StaticFiles
+
+    static_dir = Path(__file__).resolve().parent / "static"
+    static_dir.mkdir(parents=True, exist_ok=True)
+    app.mount("/static", StaticFiles(directory=str(static_dir)), name="static")
+
     app.include_router(api_router, prefix=settings.api_v1_prefix)
 
     return app

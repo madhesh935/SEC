@@ -17,3 +17,7 @@ dist/
 build/
 .DS_Store
 *.log
+
+# Ephemeral eSpeak NG output (app/ai/speech/tts.py) - regenerated per
+# request and swept after an hour, never worth committing.
+app/static/media/responses/

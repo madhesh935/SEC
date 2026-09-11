@@ -202,6 +202,7 @@ def seed_eleanor_profile():
             "description": "Sarah's husband, helps Ellie with home maintenance and gardening chores every Saturday.",
             "phone": "+1 (555) 345-6789",
             "priority": 3,
+            "photoUrl": "https://images.unsplash.com/photo-1500648767791-00dcc994a43e?auto=format&fit=crop&w=600&q=80",
             "patientVisible": True,
         },
         {
@@ -209,6 +210,7 @@ def seed_eleanor_profile():
             "relationship": "Late Husband (Remembrance)",
             "description": "Ellie's beloved husband of 40 years. Sharing fond memories of Robert brings Ellie joy and nostalgia.",
             "priority": 4,
+            "photoUrl": "https://images.unsplash.com/photo-1472099645785-5658abf4ff4e?auto=format&fit=crop&w=600&q=80",
             "patientVisible": True,
         },
     ]

@@ -47,6 +47,8 @@ from app.database.repositories.memory_repository import MemoryRepository
 from app.database.repositories.patient_repository import PatientRepository
 from app.database.repositories.user_repository import UserRepository
 from app.models.enums import UserRole
+from app.services.conversation_service import ConversationService
+from app.services.memory_service import MemoryService
 
 
 def _extract_bearer_token(authorization: str | None) -> str:
@@ -168,6 +170,13 @@ def get_memory_repository() -> MemoryRepository:
 
 
 @lru_cache
+def get_memory_service() -> MemoryService:
+    return MemoryService(
+        memory_repository=get_memory_repository(), embedding_engine=get_embedding_engine()
+    )
+
+
+@lru_cache
 def get_conversation_repository() -> ConversationRepository:
     return ConversationRepository()
 
@@ -254,4 +263,15 @@ def get_stt_service() -> SpeechToTextService:
 
 @lru_cache
 def get_orchestrator() -> InteractionOrchestrator:
-    return InteractionOrchestrator()
+    return InteractionOrchestrator(embedding_engine=get_embedding_engine())
+
+
+@lru_cache
+def get_conversation_service() -> ConversationService:
+    # Reuses the singleton orchestrator (and its embedding engine, preloaded
+    # once at startup - see app/main.py's lifespan) instead of the route
+    # constructing a bare ConversationService(), which builds a fresh
+    # InteractionOrchestrator/EmbeddingEngine per request and re-triggers a
+    # full model reload (with live Hugging Face network calls) on every
+    # single conversation turn.
+    return ConversationService(orchestrator=get_orchestrator())

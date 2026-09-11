@@ -36,6 +36,7 @@ export default function FamilyDetail() {
             <PatientImage
               url={member.photoUrl}
               label={member.name}
+              category="family"
               height={280}
             />
             <Copy size={30} bold style={{ textAlign: "center" }}>

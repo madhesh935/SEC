@@ -70,7 +70,18 @@ export function useCompanionVoice() {
   useFocusEffect(useCallback(() => () => cancel(), [cancel]));
   useEffect(() => {
     const sub = AppState.addEventListener("change", (s) => {
-      if (s !== "active") cancel();
+      // On web this fires on document.visibilitychange - alt-tabbing, or
+      // even briefly clicking DevTools, counts as "not active." That's a
+      // meaningful signal while the mic is actually capturing (stop
+      // recording if the user looks away), but once recording has already
+      // stopped and a reply is in flight, cancelling here just discards a
+      // response that's about to arrive for no reason - it silently resets
+      // to idle with no error, which reads as "the companion never
+      // responds." Only the active-recording case has anything worth
+      // protecting by cancelling.
+      if (s !== "active" && useCompanionStore.getState().state === "recording") {
+        cancel();
+      }
     });
     return () => sub.remove();
   }, [cancel]);
@@ -90,12 +101,21 @@ export function useCompanionVoice() {
   // built-in text-to-speech engine instead of leaving the patient with a
   // silent, text-only reply.
   const speakLocally = useCallback(
-    (text: string) => {
+    async (text: string) => {
       if (!text.trim()) {
         rest();
         return;
       }
       setState("speaking");
+      try {
+        // Recording (start()) leaves the audio session in a record-compatible
+        // mode. On iOS in particular, speaking through that mode routes
+        // AVSpeechSynthesizer output to near-silence - switch back to a
+        // plain playback mode first, the same way playAudio() already does.
+        await setAudioModeAsync({ playsInSilentMode: true, allowsRecording: false });
+      } catch {
+        // Non-fatal - fall through and attempt to speak anyway.
+      }
       const language = SPEECH_LOCALES[useSettingsStore.getState().language] || "en-US";
       Speech.speak(text, {
         language,
